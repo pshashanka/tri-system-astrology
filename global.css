@@ -1,7 +1,13 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', 'Helvetica',
     'Arial', sans-serif;
-  margin: 0 auto;
+  margin: 0;
   font-size: 16px;
   line-height: 1.65;
   word-break: break-word;
@@ -11,4 +17,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   hyphens: auto;
+  background: #0a0a1a;
+  color: #e0e0e8;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(138, 100, 255, 0.3);
 }

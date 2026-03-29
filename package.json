@@ -6,8 +6,17 @@
     "start": "next start"
   },
   "dependencies": {
+    "astronomy-engine": "^2.1.19",
+    "lunar-javascript": "^1.7.7",
     "next": "^16.1.5",
+    "openai": "^6.33.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "shadcn-ui": "^0.9.5",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -1,69 +1,65 @@
-import { useCallback, useEffect, useState } from 'react'
-import Button from '../components/Button'
-import ClickCount from '../components/ClickCount'
+import { useState } from 'react'
+import BirthForm from '../components/BirthForm'
+import ReadingResult from '../components/ReadingResult'
 import styles from '../styles/home.module.css'
 
-function throwError() {
-  console.log(
-    // The function body() is not defined
-    document.body()
-  )
-}
-
 function Home() {
-  const [count, setCount] = useState(0)
-  const increment = useCallback(() => {
-    setCount((v) => v + 1)
-  }, [setCount])
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const r = setInterval(() => {
-      increment()
-    }, 1000)
+  const handleSubmit = async (formData) => {
+    setLoading(true)
+    setError(null)
+    setResult(null)
 
-    return () => {
-      clearInterval(r)
+    try {
+      const res = await fetch('/api/reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate reading')
+      }
+
+      setResult(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-  }, [increment])
+  }
 
   return (
     <main className={styles.main}>
-      <h1>Fast Refresh Demo</h1>
-      <p>
-        Fast Refresh is a Next.js feature that gives you instantaneous feedback
-        on edits made to your React components, without ever losing component
-        state.
-      </p>
-      <hr className={styles.hr} />
-      <div>
-        <p>
-          Auto incrementing value. The counter won't reset after edits or if
-          there are errors.
+      <div className={styles.hero}>
+        <h1 className={styles.title}>✦ Tri-System Astrology</h1>
+        <p className={styles.subtitle}>
+          A comprehensive birth chart reading combining Vedic, Western, and Chinese astrology — synthesized by AI.
         </p>
-        <p>Current value: {count}</p>
       </div>
-      <hr className={styles.hr} />
-      <div>
-        <p>Component with state.</p>
-        <ClickCount />
-      </div>
-      <hr className={styles.hr} />
-      <div>
-        <p>
-          The button below will throw 2 errors. You'll see the error overlay to
-          let you know about the errors but it won't break the page or reset
-          your state.
-        </p>
-        <Button
-          onClick={(e) => {
-            setTimeout(() => document.parentNode(), 0)
-            throwError()
-          }}
-        >
-          Throw an Error
-        </Button>
-      </div>
-      <hr className={styles.hr} />
+
+      <BirthForm onSubmit={handleSubmit} loading={loading} />
+
+      {error && (
+        <div className={styles.error}>
+          <p>⚠ {error}</p>
+        </div>
+      )}
+
+      {loading && (
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingOrb} />
+          <p>Calculating planetary positions and generating your reading…</p>
+          <p className={styles.hint}>This may take 15–30 seconds</p>
+        </div>
+      )}
+
+      <ReadingResult data={result} />
     </main>
   )
 }
