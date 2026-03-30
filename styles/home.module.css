@@ -75,6 +75,40 @@
   margin-top: 0.3rem;
 }
 
+/* ── Location Autocomplete ── */
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.suggestionItem {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  color: #d0d0e0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.suggestionItem:hover {
+  background: rgba(167, 139, 250, 0.15);
+}
+
+.suggestionActive {
+  background: rgba(167, 139, 250, 0.2);
+  color: #e0d0ff;
+}
+
 .submitBtn {
   width: 100%;
   padding: 0.8rem;
@@ -238,14 +272,30 @@
   line-height: 1.7;
 }
 
-.sectionBody h4 {
+.sectionBody h4,
+.sectionBody .mdH3 {
   color: #a78bfa;
   margin: 1rem 0 0.3rem;
   font-size: 0.95rem;
 }
 
+.sectionBody .mdH2 {
+  color: #c4b5fd;
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1.05rem;
+}
+
 .sectionBody p {
   margin: 0.3rem 0;
+}
+
+.mdList {
+  margin: 0.3rem 0 0.3rem 1.2rem;
+  padding: 0;
+}
+
+.mdList li {
+  margin: 0.2rem 0;
 }
 
 /* ── Meta ── */

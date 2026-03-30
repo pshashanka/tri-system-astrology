@@ -1,6 +1,62 @@
 import { useState } from 'react';
 import styles from '../styles/home.module.css';
 
+// Render inline markdown: **bold**, *italic*
+function renderInline(text) {
+  const parts = [];
+  const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+  let last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m[2] !== undefined) parts.push(<strong key={m.index}>{m[2]}</strong>);
+    else if (m[3] !== undefined) parts.push(<em key={m.index}>{m[3]}</em>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+// Render markdown text into React nodes
+function MarkdownContent({ text }) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  const nodes = [];
+  let listItems = [];
+  let i = 0;
+
+  function flushList() {
+    if (listItems.length) {
+      nodes.push(<ul key={`ul-${i}`} className={styles.mdList}>{listItems}</ul>);
+      listItems = [];
+    }
+  }
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('## ')) {
+      flushList();
+      nodes.push(<h3 key={i} className={styles.mdH2}>{renderInline(trimmed.slice(3))}</h3>);
+    } else if (trimmed.startsWith('### ')) {
+      flushList();
+      nodes.push(<h4 key={i} className={styles.mdH3}>{renderInline(trimmed.slice(4))}</h4>);
+    } else if (/^[-*] /.test(trimmed)) {
+      listItems.push(<li key={i}>{renderInline(trimmed.slice(2))}</li>);
+    } else if (/^\d+\. /.test(trimmed)) {
+      listItems.push(<li key={i}>{renderInline(trimmed.replace(/^\d+\.\s/, ''))}</li>);
+    } else if (trimmed === '') {
+      flushList();
+    } else {
+      flushList();
+      nodes.push(<p key={i}>{renderInline(line)}</p>);
+    }
+    i++;
+  }
+  flushList();
+  return <>{nodes}</>;
+}
+
 function Section({ title, icon, content, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -17,12 +73,7 @@ function Section({ title, icon, content, defaultOpen = false }) {
       </button>
       {open && (
         <div className={styles.sectionBody}>
-          {content.split('\n').map((line, i) => {
-            if (line.startsWith('### ')) return <h4 key={i}>{line.slice(4)}</h4>;
-            if (line.startsWith('**') && line.endsWith('**')) return <p key={i}><strong>{line.slice(2, -2)}</strong></p>;
-            if (line.trim() === '') return <br key={i} />;
-            return <p key={i}>{line}</p>;
-          })}
+          <MarkdownContent text={content} />
         </div>
       )}
     </div>
@@ -70,7 +121,8 @@ export default function ReadingResult({ data }) {
           {birthData.date} at {birthData.time} — {birthData.location}
         </p>
         <p className={styles.coords}>
-          {birthData.coordinates.lat.toFixed(4)}°N, {birthData.coordinates.lng.toFixed(4)}°E
+          {Math.abs(birthData.coordinates.lat).toFixed(4)}°{birthData.coordinates.lat >= 0 ? 'N' : 'S'},
+          {' '}{Math.abs(birthData.coordinates.lng).toFixed(4)}°{birthData.coordinates.lng >= 0 ? 'E' : 'W'}
         </p>
       </div>
 
