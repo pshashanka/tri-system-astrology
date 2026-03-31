@@ -8,7 +8,14 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const TIMEZONE_URL = 'https://api.bigdatacloud.net/data/timezone-by-location';
 const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 
-export async function geocode(locationText) {
+export interface GeocodeResult {
+  lat: number;
+  lng: number;
+  displayName: string;
+  timezone: string | null;
+}
+
+export async function geocode(locationText: string): Promise<GeocodeResult> {
   if (!locationText || !locationText.trim()) {
     throw new Error('Location is required');
   }
@@ -37,7 +44,7 @@ export async function geocode(locationText) {
   const lng = parseFloat(data[0].lon);
 
   // Look up IANA timezone — non-critical, falls back to UTC on failure
-  let timezone = null;
+  let timezone: string | null = null;
   try {
     const tzRes = await fetch(`${TIMEZONE_URL}?latitude=${lat}&longitude=${lng}`, {
       headers: { 'User-Agent': USER_AGENT },

@@ -3,15 +3,17 @@
  * Returns up to 5 location suggestions from Nominatim for autocomplete.
  */
 
+import type { NextApiRequest, NextApiResponse } from 'next';
+
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const q = (req.query.q || '').trim();
+  const q = ((req.query.q as string) || '').trim();
   if (!q || q.length < 2) {
     return res.status(200).json([]);
   }
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
 
     const data = await resp.json();
 
-    const suggestions = data.map((item) => {
+    const suggestions = data.map((item: any) => {
       const a = item.address || {};
       const parts = [
         a.city || a.town || a.village || a.county,

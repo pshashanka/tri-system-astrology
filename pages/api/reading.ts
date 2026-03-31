@@ -3,6 +3,7 @@
  * Accepts { date, time, location } → geocodes → calculates 3 charts in parallel → AI synthesis
  */
 
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { geocode } from '../../lib/geocode';
 import { calculateWesternChart } from '../../lib/western';
 import { calculateVedicChart } from '../../lib/vedic';
@@ -11,10 +12,8 @@ import { generateReading } from '../../lib/ai';
 
 /**
  * Convert a naive local date+time string to a UTC Date using an IANA timezone.
- * Uses Intl.DateTimeFormat (built-in, no extra deps) to resolve the GMT offset
- * at that local moment, then subtracts it to get correct UTC.
  */
-function makeBirthDateTime(dateStr, timeStr, ianaTimezone) {
+function makeBirthDateTime(dateStr: string, timeStr: string, ianaTimezone: string | null): Date {
   const localAsUtc = new Date(`${dateStr}T${timeStr}:00Z`);
   if (!ianaTimezone) return localAsUtc;
   try {
@@ -25,9 +24,8 @@ function makeBirthDateTime(dateStr, timeStr, ianaTimezone) {
 
     if (!tzPart) return localAsUtc;
 
-    // Parse "GMT+5:30" / "GMT-5" → signed offset in ms
     const m = tzPart.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
-    if (!m) return localAsUtc; // UTC itself (no offset)
+    if (!m) return localAsUtc;
 
     const sign = m[1] === '+' ? 1 : -1;
     const offsetMs = sign * (parseInt(m[2]) * 60 + parseInt(m[3] || '0')) * 60_000;
@@ -38,11 +36,11 @@ function makeBirthDateTime(dateStr, timeStr, ianaTimezone) {
 }
 
 // Simple in-memory rate limiter: max 10 requests per IP per minute
-const rateMap = new Map();
+const rateMap = new Map<string, { start: number; count: number }>();
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 60_000;
 
-function checkRateLimit(ip) {
+function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateMap.get(ip);
   if (!entry || now - entry.start > RATE_WINDOW) {
@@ -53,13 +51,13 @@ function checkRateLimit(ip) {
   return entry.count <= RATE_LIMIT;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // Rate limiting
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
   if (!checkRateLimit(ip)) {
     return res.status(429).json({ error: 'Too many requests. Please wait a minute.' });
   }
@@ -111,9 +109,8 @@ export default async function handler(req, res) {
       },
       reading,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Reading API error:', err);
-    // Return a safe message — don't expose internal error details to the client
     const isUserError = err.message?.startsWith('Location not found') ||
       err.message?.startsWith('Birth') ||
       err.message?.startsWith('Invalid');

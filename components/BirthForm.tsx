@@ -1,19 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, FormEvent, KeyboardEvent } from 'react';
 import styles from '../styles/home.module.css';
 
-export default function BirthForm({ onSubmit, loading }) {
+interface Suggestion {
+  label: string;
+  displayName: string;
+  lat: number;
+  lng: number;
+}
+
+interface BirthFormProps {
+  onSubmit: (data: { date: string; time: string; location: string }) => void;
+  loading: boolean;
+}
+
+export default function BirthForm({ onSubmit, loading }: BirthFormProps) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('12:00');
   const [location, setLocation] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const debounceRef = useRef(null);
-  const wrapperRef = useRef(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Fetch suggestions with debounce + AbortController to cancel stale requests
   useEffect(() => {
-    clearTimeout(debounceRef.current);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (location.length < 2) {
       setSuggestions([]);
       return;
@@ -28,20 +40,20 @@ export default function BirthForm({ onSubmit, loading }) {
         setSuggestions(Array.isArray(data) ? data : []);
         setShowSuggestions(true);
         setActiveIndex(-1);
-      } catch (err) {
+      } catch (err: any) {
         if (err.name !== 'AbortError') setSuggestions([]);
       }
     }, 300);
     return () => {
-      clearTimeout(debounceRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       controller.abort();
     };
   }, [location]);
 
   // Close dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
     }
@@ -49,13 +61,13 @@ export default function BirthForm({ onSubmit, loading }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function selectSuggestion(s) {
+  function selectSuggestion(s: Suggestion) {
     setLocation(s.label);
     setSuggestions([]);
     setShowSuggestions(false);
   }
 
-  function handleKeyDown(e) {
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (!showSuggestions || !suggestions.length) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -71,7 +83,7 @@ export default function BirthForm({ onSubmit, loading }) {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!date || !location) return;
     onSubmit({ date, time, location });

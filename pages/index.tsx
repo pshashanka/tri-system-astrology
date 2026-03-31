@@ -3,12 +3,38 @@ import BirthForm from '../components/BirthForm'
 import ReadingResult from '../components/ReadingResult'
 import styles from '../styles/home.module.css'
 
+interface FormData {
+  date: string;
+  time: string;
+  location: string;
+}
+
+interface ReadingData {
+  birthData: {
+    date: string;
+    time: string;
+    location: string;
+    coordinates: { lat: number; lng: number };
+  };
+  charts: {
+    western: any;
+    vedic: any;
+    chinese: any;
+  };
+  reading: {
+    raw: string;
+    sections: { vedic: string; western: string; chinese: string; synthesis: string };
+    model: string;
+    usage?: { total_tokens: number };
+  };
+}
+
 function Home() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
+  const [result, setResult] = useState<ReadingData | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData: FormData) => {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -27,7 +53,7 @@ function Home() {
       }
 
       setResult(data)
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)

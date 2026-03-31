@@ -9,11 +9,17 @@ import * as Astronomy from 'astronomy-engine';
 const SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
-];
+] as const;
 
-const PLANETS = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+const PLANETS = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'] as const;
 
-const ASPECT_DEFS = [
+interface AspectDef {
+  name: string;
+  angle: number;
+  orb: number;
+}
+
+const ASPECT_DEFS: AspectDef[] = [
   { name: 'Conjunction', angle: 0, orb: 8 },
   { name: 'Sextile', angle: 60, orb: 6 },
   { name: 'Square', angle: 90, orb: 7 },
@@ -21,21 +27,50 @@ const ASPECT_DEFS = [
   { name: 'Opposition', angle: 180, orb: 8 },
 ];
 
-function degToSign(deg) {
+interface SignInfo {
+  sign: string;
+  degree: number;
+  longitude: number;
+}
+
+interface Aspect {
+  planet1: string;
+  planet2: string;
+  aspect: string;
+  angle: number;
+  orb: number;
+}
+
+interface House {
+  sign: string;
+  planets: string[];
+}
+
+export interface WesternChart {
+  system: string;
+  ascendant: SignInfo;
+  sun: SignInfo;
+  moon: SignInfo;
+  planets: Record<string, SignInfo>;
+  houses: Record<number, House>;
+  aspects: Aspect[];
+}
+
+function degToSign(deg: number): SignInfo {
   const normalized = ((deg % 360) + 360) % 360;
   const idx = Math.floor(normalized / 30);
   const within = normalized % 30;
   return { sign: SIGNS[idx], degree: Math.round(within * 100) / 100, longitude: Math.round(normalized * 100) / 100 };
 }
 
-function getPlanetLongitude(body, date) {
+function getPlanetLongitude(body: string, date: Date): number {
   if (body === 'Sun') {
     return Astronomy.SunPosition(date).elon;
   }
-  return Astronomy.EclipticLongitude(body, date);
+  return Astronomy.EclipticLongitude(body as Astronomy.Body, date);
 }
 
-function computeAscendant(date, lat, lng) {
+function computeAscendant(date: Date, lat: number, lng: number): number {
   const gmst = Astronomy.SiderealTime(date);
   const lst = ((gmst + lng / 15) % 24 + 24) % 24;
   const ramc = lst * 15;
@@ -58,8 +93,8 @@ function computeAscendant(date, lat, lng) {
   return asc;
 }
 
-function findAspects(bodies) {
-  const aspects = [];
+function findAspects(bodies: Record<string, { longitude: number }>): Aspect[] {
+  const aspects: Aspect[] = [];
   const keys = Object.keys(bodies);
 
   for (let i = 0; i < keys.length; i++) {
@@ -87,29 +122,29 @@ function findAspects(bodies) {
   return aspects;
 }
 
-function computeHouses(ascDeg) {
+function computeHouses(ascDeg: number): { houses: Record<number, House>; ascSign: number } {
   const ascSign = Math.floor(((ascDeg % 360 + 360) % 360) / 30);
-  const houses = {};
+  const houses: Record<number, House> = {};
   for (let i = 0; i < 12; i++) {
     houses[i + 1] = { sign: SIGNS[(ascSign + i) % 12], planets: [] };
   }
   return { houses, ascSign };
 }
 
-export function calculateWesternChart(date, lat, lng) {
+export function calculateWesternChart(date: Date, lat: number, lng: number): WesternChart {
   const ascDeg = computeAscendant(date, lat, lng);
   const ascInfo = degToSign(ascDeg);
 
   const sun = degToSign(getPlanetLongitude('Sun', date));
   const moon = degToSign(getPlanetLongitude('Moon', date));
 
-  const planets = {};
+  const planets: Record<string, SignInfo> = {};
   for (const name of PLANETS) {
     planets[name.toLowerCase()] = degToSign(getPlanetLongitude(name, date));
   }
 
   // Build all bodies map for aspects
-  const allBodies = {
+  const allBodies: Record<string, { longitude: number }> = {
     sun: { longitude: sun.longitude },
     moon: { longitude: moon.longitude },
   };
@@ -124,7 +159,7 @@ export function calculateWesternChart(date, lat, lng) {
 
   // Place planets in houses
   const ascSignIdx = Math.floor(((ascDeg % 360 + 360) % 360) / 30);
-  function getHouse(longitude) {
+  function getHouse(longitude: number): number {
     const signIdx = Math.floor(((longitude % 360 + 360) % 360) / 30);
     return ((signIdx - ascSignIdx + 12) % 12) + 1;
   }

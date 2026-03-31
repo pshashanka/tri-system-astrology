@@ -4,6 +4,9 @@
  */
 
 import OpenAI from 'openai';
+import type { WesternChart } from './western';
+import type { VedicChart } from './vedic';
+import type { ChineseChart } from './chinese';
 
 const SYSTEM_PROMPT = `You are a master astrologer with deep expertise in three astrological traditions: Western (Tropical), Vedic (Jyotish/Sidereal), and Chinese (BaZi/Four Pillars).
 
@@ -28,7 +31,25 @@ Guidelines:
 - Use an authoritative but warm, accessible tone
 - Do not disclaim that you are an AI`;
 
-export async function generateReading(westernChart, vedicChart, chineseChart) {
+interface ReadingSections {
+  vedic: string;
+  western: string;
+  chinese: string;
+  synthesis: string;
+}
+
+export interface ReadingResult {
+  raw: string;
+  sections: ReadingSections;
+  model: string;
+  usage: OpenAI.Completions.CompletionUsage | undefined;
+}
+
+export async function generateReading(
+  westernChart: WesternChart,
+  vedicChart: VedicChart,
+  chineseChart: ChineseChart
+): Promise<ReadingResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey === 'your-api-key-here') {
     throw new Error('OPENAI_API_KEY is not configured. Add it to .env.local');
@@ -49,7 +70,7 @@ ${JSON.stringify(vedicChart, null, 2)}
 ${JSON.stringify(chineseChart, null, 2)}`;
 
   // Retry up to 3 times with exponential backoff on rate-limit errors (429)
-  let lastError;
+  let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await client.chat.completions.create({
@@ -62,14 +83,14 @@ ${JSON.stringify(chineseChart, null, 2)}`;
         max_tokens: 3000,
       });
 
-      const content = response.choices[0].message.content;
+      const content = response.choices[0].message.content || '';
       return {
         raw: content,
         sections: parseSections(content),
         model,
         usage: response.usage,
       };
-    } catch (err) {
+    } catch (err: any) {
       lastError = err;
       const isRateLimit = err?.status === 429 || err?.error?.type === 'requests';
       if (!isRateLimit || attempt === 2) throw err;
@@ -79,8 +100,8 @@ ${JSON.stringify(chineseChart, null, 2)}`;
   throw lastError;
 }
 
-function parseSections(text) {
-  const sections = {
+function parseSections(text: string): ReadingSections {
+  const sections: ReadingSections = {
     vedic: '',
     western: '',
     chinese: '',
@@ -99,6 +120,3 @@ function parseSections(text) {
 
   return sections;
 }
-
-// Exported for testing
-export { SYSTEM_PROMPT, parseSections };

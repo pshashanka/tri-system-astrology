@@ -6,8 +6,19 @@
 
 import { Solar } from 'lunar-javascript';
 
+interface StemInfo {
+  pinyin: string;
+  element: string;
+  yinYang: string;
+}
+
+interface BranchInfo {
+  pinyin: string;
+  animal: string;
+}
+
 // Heavenly Stems: Chinese → English + Element
-const STEMS = {
+const STEMS: Record<string, StemInfo> = {
   '甲': { pinyin: 'Jia', element: 'Wood', yinYang: 'Yang' },
   '乙': { pinyin: 'Yi', element: 'Wood', yinYang: 'Yin' },
   '丙': { pinyin: 'Bing', element: 'Fire', yinYang: 'Yang' },
@@ -21,7 +32,7 @@ const STEMS = {
 };
 
 // Earthly Branches: Chinese → English + Animal
-const BRANCHES = {
+const BRANCHES: Record<string, BranchInfo> = {
   '子': { pinyin: 'Zi', animal: 'Rat' },
   '丑': { pinyin: 'Chou', animal: 'Ox' },
   '寅': { pinyin: 'Yin', animal: 'Tiger' },
@@ -37,31 +48,30 @@ const BRANCHES = {
 };
 
 // Animals in Chinese
-const ANIMALS = {
+const ANIMALS: Record<string, string> = {
   '鼠': 'Rat', '牛': 'Ox', '虎': 'Tiger', '兔': 'Rabbit',
   '龙': 'Dragon', '蛇': 'Snake', '马': 'Horse', '羊': 'Goat',
   '猴': 'Monkey', '鸡': 'Rooster', '狗': 'Dog', '猪': 'Pig',
 };
 
 // Five Elements in Chinese
-const ELEMENTS = {
+const ELEMENTS: Record<string, string> = {
   '金': 'Metal', '木': 'Wood', '水': 'Water', '火': 'Fire', '土': 'Earth',
 };
 
-function translateStem(ch) {
+function translateStem(ch: string): StemInfo {
   return STEMS[ch] || { pinyin: ch, element: 'Unknown', yinYang: 'Unknown' };
 }
 
-function translateBranch(ch) {
+function translateBranch(ch: string): BranchInfo {
   return BRANCHES[ch] || { pinyin: ch, animal: 'Unknown' };
 }
 
-function translateAnimal(ch) {
+function translateAnimal(ch: string): string {
   return ANIMALS[ch] || ch;
 }
 
-function translateWuXing(wuxing) {
-  // wuxing is a 2-char string like "金土" → stem element + branch element
+function translateWuXing(wuxing: string): { stemElement: string; branchElement: string } {
   if (!wuxing || wuxing.length < 2) return { stemElement: 'Unknown', branchElement: 'Unknown' };
   return {
     stemElement: ELEMENTS[wuxing[0]] || wuxing[0],
@@ -69,7 +79,14 @@ function translateWuXing(wuxing) {
   };
 }
 
-function parsePillar(stemCh, branchCh, wuxing) {
+interface Pillar {
+  stem: { chinese: string; pinyin: string; element: string; yinYang: string };
+  branch: { chinese: string; pinyin: string; animal: string };
+  elements: { stemElement: string; branchElement: string };
+  full: string;
+}
+
+function parsePillar(stemCh: string, branchCh: string, wuxing: string): Pillar {
   const stem = translateStem(stemCh);
   const branch = translateBranch(branchCh);
   const elements = translateWuXing(wuxing);
@@ -81,7 +98,16 @@ function parsePillar(stemCh, branchCh, wuxing) {
   };
 }
 
-export function calculateChineseChart(date) {
+export interface ChineseChart {
+  system: string;
+  animal: string;
+  dayMaster: { element: string; yinYang: string; description: string };
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar };
+  naYin: Record<string, string>;
+  lunarDate: { year: number; month: number; day: number };
+}
+
+export function calculateChineseChart(date: Date): ChineseChart {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -110,7 +136,7 @@ export function calculateChineseChart(date) {
   };
 
   // NaYin (Sexagenary sound)
-  let naYin = {};
+  let naYin: Record<string, string> = {};
   try {
     naYin = {
       year: bazi.getYearNaYin(),

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import styles from '../styles/home.module.css';
 
 // Render inline markdown: **bold**, *italic*
-function renderInline(text) {
-  const parts = [];
+function renderInline(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
   const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
-  let last = 0, m;
+  let last = 0;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     if (m[2] !== undefined) parts.push(<strong key={m.index}>{m[2]}</strong>);
@@ -17,11 +18,11 @@ function renderInline(text) {
 }
 
 // Render markdown text into React nodes
-function MarkdownContent({ text }) {
+function MarkdownContent({ text }: { text: string }) {
   if (!text) return null;
   const lines = text.split('\n');
-  const nodes = [];
-  let listItems = [];
+  const nodes: ReactNode[] = [];
+  let listItems: ReactNode[] = [];
   let i = 0;
 
   function flushList() {
@@ -57,7 +58,14 @@ function MarkdownContent({ text }) {
   return <>{nodes}</>;
 }
 
-function Section({ title, icon, content, defaultOpen = false }) {
+interface SectionProps {
+  title: string;
+  icon: string;
+  content: string;
+  defaultOpen?: boolean;
+}
+
+function Section({ title, icon, content, defaultOpen = false }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -80,7 +88,13 @@ function Section({ title, icon, content, defaultOpen = false }) {
   );
 }
 
-function ChartSummary({ charts }) {
+interface Charts {
+  western: { sun: { sign: string }; moon: { sign: string }; ascendant: { sign: string } };
+  vedic: { lagna: { sign: string }; moon: { sign: string; nakshatra: { name: string } }; dasha: { mahadasha: { planet: string } } };
+  chinese: { animal: string; dayMaster: { description: string }; pillars: { year: { full: string } } };
+}
+
+function ChartSummary({ charts }: { charts: Charts }) {
   if (!charts) return null;
   const { western, vedic, chinese } = charts;
 
@@ -108,7 +122,22 @@ function ChartSummary({ charts }) {
   );
 }
 
-export default function ReadingResult({ data }) {
+interface ReadingData {
+  birthData: {
+    date: string;
+    time: string;
+    location: string;
+    coordinates: { lat: number; lng: number };
+  };
+  charts: Charts;
+  reading: {
+    sections: { vedic: string; western: string; chinese: string; synthesis: string };
+    model: string;
+    usage?: { total_tokens: number };
+  };
+}
+
+export default function ReadingResult({ data }: { data: ReadingData | null }) {
   if (!data) return null;
 
   const { birthData, charts, reading } = data;
