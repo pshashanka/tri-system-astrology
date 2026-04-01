@@ -7,6 +7,10 @@
  * Twelve Growth Phases (Di Shi), Five-Element Balance, NaYin,
  * Special Palaces (Ming Gong, Shen Gong, Tai Yuan, Tai Xi),
  * Xun Kong (Void), and Luck Pillars (Da Yun).
+ *
+ * Zi hour convention: sect=1 (early Zi / 早子时) — a birth at 23:00–23:59
+ * advances the day pillar to the next day, which is the standard in modern
+ * BaZi practice.
  */
 
 import { Solar } from 'lunar-javascript';
@@ -99,6 +103,40 @@ const GROWTH_PHASES: Record<string, string> = {
   '养':   'Nurture (Yang)',
 };
 
+// NaYin (纳音 / Sexagenary Sound) — all 30 values, Chinese → English
+const NAYIN_EN: Record<string, string> = {
+  '海中金': 'Gold in the Sea',
+  '炉中火': 'Fire in the Furnace',
+  '大林木': 'Wood of the Great Forest',
+  '路旁土': 'Earth by the Roadside',
+  '剑锋金': 'Metal of the Sword Edge',
+  '山头火': 'Fire on the Mountaintop',
+  '涧下水': 'Water beneath the Stream',
+  '城头土': 'Earth on the City Wall',
+  '白蜡金': 'White Wax Metal',
+  '杨柳木': 'Willow Wood',
+  '泉中水': 'Water in the Spring',
+  '屋上土': 'Earth on the Roof',
+  '霹雳火': 'Thunderbolt Fire',
+  '松柏木': 'Pine and Cypress Wood',
+  '长流水': 'Ever-flowing Water',
+  '沙中金': 'Gold in the Sand',
+  '山下火': 'Fire beneath the Mountain',
+  '平地木': 'Flatland Wood',
+  '壁上土': 'Earth on the Wall',
+  '金箔金': 'Gold Foil Metal',
+  '覆灯火': 'Lamp Fire',
+  '天河水': 'Water of the Milky Way',
+  '大驿土': 'Earth of the Great Post Road',
+  '钗钏金': 'Hairpin Metal',
+  '桑柘木': 'Mulberry Wood',
+  '大溪水': 'Water of the Great Stream',
+  '沙中土': 'Earth in the Sand',
+  '天上火': 'Fire in the Sky',
+  '石榴木': 'Pomegranate Wood',
+  '大海水': 'Water of the Great Sea',
+};
+
 /* ------------------------------------------------------------------ */
 /*  Translation helpers                                                */
 /* ------------------------------------------------------------------ */
@@ -115,16 +153,30 @@ function translateAnimal(ch: string): string {
   return ANIMALS[ch] || ch;
 }
 
-function translateElement(ch: string): string {
-  return ELEMENTS[ch] || ch;
-}
-
 function translateTenGod(ch: string): string {
   return TEN_GODS[ch] || ch;
 }
 
 function translateGrowthPhase(ch: string): string {
   return GROWTH_PHASES[ch] || ch;
+}
+
+function translateNaYin(ch: string): string {
+  return NAYIN_EN[ch] || ch;
+}
+
+/** Translate a Chinese GanZhi pair (e.g. '甲子') to pinyin (e.g. 'Jia Zi'). */
+function translateGanZhi(gz: string): string {
+  if (!gz || gz.length < 2) return gz || '';
+  const stem = translateStem(gz[0]);
+  const branch = translateBranch(gz[1]);
+  return `${stem.pinyin} ${branch.pinyin}`;
+}
+
+/** Translate a Chinese XunKong pair (e.g. '戌亥') to pinyin (e.g. 'Xu Hai'). */
+function translateXunKong(xk: string): string {
+  if (!xk || xk.length < 2) return xk || '';
+  return `${translateBranch(xk[0]).pinyin} ${translateBranch(xk[1]).pinyin}`;
 }
 
 function translateWuXing(wuxing: string): { stemElement: string; branchElement: string } {
@@ -202,6 +254,10 @@ function parsePillar(
 /*  Five-element balance                                               */
 /* ------------------------------------------------------------------ */
 
+// Hidden stem weights by position: main qi (本气) > middle qi (中气) > residual qi (余气).
+// The library returns hidden stems in traditional order: [main, middle, residual].
+const HIDDEN_STEM_WEIGHTS = [0.7, 0.3, 0.1];
+
 interface ElementBalance {
   Wood: number;
   Fire: number;
@@ -216,14 +272,21 @@ function computeElementBalance(pillars: Pillar[]): ElementBalance {
   const counts: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
 
   for (const p of pillars) {
-    // Count heavenly stem element
+    // Heavenly stem element (full weight)
     if (counts[p.stem.element] !== undefined) counts[p.stem.element]++;
-    // Count branch native element
+    // Branch native element (full weight)
     if (counts[p.branch.element] !== undefined) counts[p.branch.element]++;
-    // Count hidden stem elements (weight 0.5 each for balance)
-    for (const h of p.hiddenStems) {
-      if (counts[h.element] !== undefined) counts[h.element] += 0.5;
+    // Hidden stem elements — graduated weight by qi rank
+    for (let i = 0; i < p.hiddenStems.length; i++) {
+      const h = p.hiddenStems[i];
+      const weight = HIDDEN_STEM_WEIGHTS[i] ?? 0.1;
+      if (counts[h.element] !== undefined) counts[h.element] += weight;
     }
+  }
+
+  // Round to 1 decimal for readability
+  for (const el of Object.keys(counts)) {
+    counts[el] = Math.round(counts[el] * 10) / 10;
   }
 
   let dominant = 'Wood';
@@ -242,10 +305,11 @@ function computeElementBalance(pillars: Pillar[]): ElementBalance {
 
 interface LuckPillar {
   ganZhi: string;
+  stem: { pinyin: string; element: string; yinYang: string };
+  branch: { pinyin: string; animal: string; element: string };
   startAge: number;
   endAge: number;
   startYear: number;
-  element: string;
 }
 
 function buildLuckPillars(bazi: any, gender: number): LuckPillar[] {
@@ -258,14 +322,15 @@ function buildLuckPillars(bazi: any, gender: number): LuckPillar[] {
     for (let i = 1; i < count; i++) {
       const dy = daYunArr[i];
       const gz: string = dy.getGanZhi();
-      const stemCh = gz[0];
-      const stemInfo = translateStem(stemCh);
+      const stemInfo = translateStem(gz[0]);
+      const branchInfo = translateBranch(gz[1]);
       pillars.push({
-        ganZhi: gz,
+        ganZhi: translateGanZhi(gz),
+        stem: { pinyin: stemInfo.pinyin, element: stemInfo.element, yinYang: stemInfo.yinYang },
+        branch: { pinyin: branchInfo.pinyin, animal: branchInfo.animal, element: branchInfo.element },
         startAge: dy.getStartAge(),
         endAge: dy.getEndAge(),
         startYear: dy.getStartYear(),
-        element: stemInfo.element,
       });
     }
     return pillars;
@@ -287,6 +352,15 @@ function safeCall<T>(fn: () => T, fallback: T): T {
   try { return fn(); } catch { return fallback; }
 }
 
+function buildPalace(ganZhiFn: () => string, naYinFn: () => string): SpecialPalace {
+  const rawGz = safeCall(ganZhiFn, '');
+  const rawNaYin = safeCall(naYinFn, '');
+  return {
+    ganZhi: translateGanZhi(rawGz),
+    naYin: translateNaYin(rawNaYin),
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Public interface                                                    */
 /* ------------------------------------------------------------------ */
@@ -304,6 +378,7 @@ export interface ChineseChart {
     mingGong: SpecialPalace;
     shenGong: SpecialPalace;
     taiYuan: SpecialPalace;
+    taiXi: SpecialPalace;
   };
   xunKong: Record<string, string>;
   luckPillars: LuckPillar[];
@@ -312,7 +387,7 @@ export interface ChineseChart {
 
 /**
  * Calculate a complete BaZi (Four Pillars) chart.
- * @param date  - Birth date/time (UTC‑adjusted)
+ * @param date  - Birth date/time (UTC-adjusted)
  * @param gender - 1 = male, 0 = female (needed for Luck Pillar direction)
  */
 export function calculateChineseChart(date: Date, gender: number = 1): ChineseChart {
@@ -326,6 +401,10 @@ export function calculateChineseChart(date: Date, gender: number = 1): ChineseCh
   const solar = Solar.fromYmdHms(year, month, day, hour, minute, second);
   const lunar = solar.getLunar();
   const bazi = lunar.getEightChar();
+
+  // Use sect=1: early Zi hour (23:00-23:59) advances the day pillar to the next day.
+  // This is the standard convention in modern BaZi practice.
+  bazi.setSect(1);
 
   /* ---------- Four Pillars with Hidden Stems & Ten Gods ---------- */
 
@@ -389,40 +468,36 @@ export function calculateChineseChart(date: Date, gender: number = 1): ChineseCh
   /* ---------- Element balance ---------- */
   const elementBalance = computeElementBalance(allPillars);
 
-  /* ---------- NaYin ---------- */
+  /* ---------- NaYin (translated to English) ---------- */
   const naYin: Record<string, string> = {
-    year: safeCall(() => bazi.getYearNaYin(), ''),
-    month: safeCall(() => bazi.getMonthNaYin(), ''),
-    day: safeCall(() => bazi.getDayNaYin(), ''),
-    hour: safeCall(() => bazi.getTimeNaYin(), ''),
+    year: translateNaYin(safeCall(() => bazi.getYearNaYin(), '')),
+    month: translateNaYin(safeCall(() => bazi.getMonthNaYin(), '')),
+    day: translateNaYin(safeCall(() => bazi.getDayNaYin(), '')),
+    hour: translateNaYin(safeCall(() => bazi.getTimeNaYin(), '')),
   };
 
-  /* ---------- Special Palaces ---------- */
+  /* ---------- Special Palaces (translated) ---------- */
   const specialPalaces = {
-    mingGong: {
-      ganZhi: safeCall(() => bazi.getMingGong(), ''),
-      naYin: safeCall(() => bazi.getMingGongNaYin(), ''),
-    },
-    shenGong: {
-      ganZhi: safeCall(() => bazi.getShenGong(), ''),
-      naYin: safeCall(() => bazi.getShenGongNaYin(), ''),
-    },
-    taiYuan: {
-      ganZhi: safeCall(() => bazi.getTaiYuan(), ''),
-      naYin: safeCall(() => bazi.getTaiYuanNaYin(), ''),
-    },
+    mingGong: buildPalace(() => bazi.getMingGong(), () => bazi.getMingGongNaYin()),
+    shenGong: buildPalace(() => bazi.getShenGong(), () => bazi.getShenGongNaYin()),
+    taiYuan:  buildPalace(() => bazi.getTaiYuan(),  () => bazi.getTaiYuanNaYin()),
+    taiXi:    buildPalace(() => bazi.getTaiXi(),    () => bazi.getTaiXiNaYin()),
   };
 
-  /* ---------- Xun Kong (Void branches) ---------- */
+  /* ---------- Xun Kong (Void branches — translated to pinyin) ---------- */
   const xunKong: Record<string, string> = {
-    year: safeCall(() => bazi.getYearXunKong(), ''),
-    month: safeCall(() => bazi.getMonthXunKong(), ''),
-    day: safeCall(() => bazi.getDayXunKong(), ''),
-    hour: safeCall(() => bazi.getTimeXunKong(), ''),
+    year: translateXunKong(safeCall(() => bazi.getYearXunKong(), '')),
+    month: translateXunKong(safeCall(() => bazi.getMonthXunKong(), '')),
+    day: translateXunKong(safeCall(() => bazi.getDayXunKong(), '')),
+    hour: translateXunKong(safeCall(() => bazi.getTimeXunKong(), '')),
   };
 
   /* ---------- Luck Pillars (Da Yun) ---------- */
   const luckPillars = buildLuckPillars(bazi, gender);
+
+  /* ---------- Lunar date ---------- */
+  // lunar.getMonth() returns negative values for leap months (e.g. -4 = leap 4th month)
+  const lunarMonth = lunar.getMonth();
 
   return {
     system: 'Chinese (BaZi / Four Pillars)',
@@ -438,9 +513,9 @@ export function calculateChineseChart(date: Date, gender: number = 1): ChineseCh
     luckPillars,
     lunarDate: {
       year: lunar.getYear(),
-      month: lunar.getMonth(),
+      month: Math.abs(lunarMonth),
       day: lunar.getDay(),
-      isLeapMonth: !!safeCall(() => lunar.isLeap?.() ?? false, false),
+      isLeapMonth: lunarMonth < 0,
     },
   };
 }
