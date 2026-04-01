@@ -9,7 +9,7 @@ interface Suggestion {
 }
 
 interface BirthFormProps {
-  onSubmit: (data: { date: string; time: string; location: string }) => void;
+  onSubmit: (data: { date: string; time: string; location: string; gender: string }) => void;
   loading: boolean;
 }
 
@@ -17,6 +17,7 @@ export default function BirthForm({ onSubmit, loading }: BirthFormProps) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('12:00');
   const [location, setLocation] = useState('');
+  const [gender, setGender] = useState('male');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -86,7 +87,7 @@ export default function BirthForm({ onSubmit, loading }: BirthFormProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!date || !location) return;
-    onSubmit({ date, time, location });
+    onSubmit({ date, time, location, gender });
   };
 
   return (
@@ -143,6 +144,20 @@ export default function BirthForm({ onSubmit, loading }: BirthFormProps) {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="birth-gender" className={styles.label}>Gender</label>
+        <select
+          id="birth-gender"
+          className={styles.input}
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+        <span className={styles.hint}>Used for BaZi Luck Pillar direction</span>
       </div>
 
       <button

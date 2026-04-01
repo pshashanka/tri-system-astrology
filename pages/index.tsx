@@ -7,6 +7,7 @@ interface FormData {
   date: string;
   time: string;
   location: string;
+  gender: string;
 }
 
 interface ReadingData {

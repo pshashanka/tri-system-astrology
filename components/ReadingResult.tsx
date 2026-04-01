@@ -91,7 +91,7 @@ function Section({ title, icon, content, defaultOpen = false }: SectionProps) {
 interface Charts {
   western: { sun: { sign: string }; moon: { sign: string }; ascendant: { sign: string } };
   vedic: { lagna: { sign: string }; moon: { sign: string; nakshatra: { name: string } }; dasha: { mahadasha: { planet: string } } };
-  chinese: { animal: string; dayMaster: { description: string }; pillars: { year: { full: string } } };
+  chinese: { animal: string; dayMaster: { description: string }; pillars: { year: { full: string } }; elementBalance?: { dominant: string; weakest: string } };
 }
 
 function ChartSummary({ charts }: { charts: Charts }) {
@@ -117,6 +117,9 @@ function ChartSummary({ charts }: { charts: Charts }) {
         <p>Animal: {chinese.animal}</p>
         <p>Day Master: {chinese.dayMaster.description}</p>
         <p>Year: {chinese.pillars.year.full}</p>
+        {chinese.elementBalance && (
+          <p>Elements: {chinese.elementBalance.dominant} strong, {chinese.elementBalance.weakest} weak</p>
+        )}
       </div>
     </div>
   );

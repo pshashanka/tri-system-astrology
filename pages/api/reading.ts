@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Too many requests. Please wait a minute.' });
   }
 
-  const { date, time, location } = req.body;
+  const { date, time, location, gender } = req.body;
 
   // Validate required fields
   if (!date) {
@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [westernChart, vedicChart, chineseChart] = await Promise.all([
       Promise.resolve(calculateWesternChart(dateTime, geo.lat, geo.lng)),
       Promise.resolve(calculateVedicChart(dateTime, geo.lat, geo.lng)),
-      Promise.resolve(calculateChineseChart(dateTime)),
+      Promise.resolve(calculateChineseChart(dateTime, gender === 'female' ? 0 : 1)),
     ]);
 
     // AI synthesis

@@ -19,7 +19,7 @@ Interpret the sidereal chart: Lagna, planetary dignities, Rahu/Ketu axis, Naksha
 Interpret the tropical chart: Sun/Moon/Ascendant, major aspects, house placements. Focus on personality, psychological dynamics, and key life themes.
 
 ## Chinese (BaZi) Analysis
-Interpret the Four Pillars: Day Master strength, elemental balance, pillar interactions, and the animal sign. Focus on destiny patterns, favorable/unfavorable elements, and life phases.
+Interpret the Four Pillars comprehensively: Day Master strength analysis using the elemental balance data, Ten Gods (Shi Shen) relationships across all pillars, hidden stems within each branch, twelve growth phases (Di Shi), special palaces (Ming Gong, Shen Gong), NaYin, Xun Kong voids, and the Luck Pillar (Da Yun) timeline. Identify favorable and unfavorable elements. Connect the animal sign and Day Master to personality and destiny patterns.
 
 ## Unified Synthesis
 Weave all three systems together. Identify where they agree (reinforcing themes), where they diverge (nuance and complexity), and what the combined picture reveals about the person's core nature, life path, strengths, challenges, and current cosmic timing.
