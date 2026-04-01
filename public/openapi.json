@@ -1,0 +1,413 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tri-System Astrology API",
+    "description": "Calculate birth charts across three astrological traditions: Western (Tropical), Vedic (Sidereal/Jyotish), and Chinese (BaZi/Four Pillars). Returns structured chart data for AI synthesis.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_DOMAIN",
+      "description": "Production — replace with your Vercel deployment URL"
+    }
+  ],
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "paths": {
+    "/api/v1/charts": {
+      "post": {
+        "operationId": "calculateCharts",
+        "summary": "Calculate tri-system birth charts",
+        "description": "Accepts birth date, time, and location. Returns Western, Vedic, and Chinese chart data. Supports location string (geocodes internally) or direct coordinates.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["date"],
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Birth date in YYYY-MM-DD format",
+                    "example": "1990-05-15"
+                  },
+                  "time": {
+                    "type": "string",
+                    "description": "Birth time in HH:MM format (24h). Defaults to 12:00 if unknown.",
+                    "example": "14:30"
+                  },
+                  "location": {
+                    "type": "string",
+                    "description": "Birth location name (e.g. 'New York, NY'). Will be geocoded. Provide this OR lat/lng/timezone.",
+                    "example": "New York, NY, USA"
+                  },
+                  "lat": {
+                    "type": "number",
+                    "description": "Latitude (-90 to 90). Use with lng and timezone to skip geocoding.",
+                    "example": 40.7128
+                  },
+                  "lng": {
+                    "type": "number",
+                    "description": "Longitude (-180 to 180). Use with lat and timezone.",
+                    "example": -74.006
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "description": "IANA timezone (e.g. 'America/New_York'). Use with lat/lng.",
+                    "example": "America/New_York"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": ["male", "female"],
+                    "description": "Gender affects Chinese Da Yun (Luck Pillar) direction. Defaults to male."
+                  },
+                  "summary": {
+                    "type": "boolean",
+                    "description": "If true, returns condensed chart data optimized for AI consumption (~3-5KB instead of ~15-30KB). Recommended for GPT usage.",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Charts calculated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geocode": {
+      "get": {
+        "operationId": "geocodeLocation",
+        "summary": "Geocode a location query",
+        "description": "Returns up to 5 location suggestions with coordinates. Use this to resolve ambiguous location names before calling calculateCharts.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200
+            },
+            "description": "Location search query (e.g. 'London' or 'Tokyo, Japan')",
+            "example": "London"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/GeocodeSuggestion" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key passed as Bearer token"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "GeocodeSuggestion": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string", "description": "Short display label" },
+          "displayName": { "type": "string", "description": "Full location name" },
+          "lat": { "type": "number" },
+          "lng": { "type": "number" }
+        }
+      },
+      "ChartResponse": {
+        "type": "object",
+        "properties": {
+          "birthData": { "$ref": "#/components/schemas/BirthData" },
+          "charts": {
+            "type": "object",
+            "properties": {
+              "western": { "$ref": "#/components/schemas/WesternChart" },
+              "vedic": { "$ref": "#/components/schemas/VedicChart" },
+              "chinese": { "$ref": "#/components/schemas/ChineseChart" }
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Warnings about degraded conditions (e.g. timezone lookup failure)"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "calculatedAt": { "type": "string", "format": "date-time" },
+              "version": { "type": "string" },
+              "summarized": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "BirthData": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "time": { "type": "string" },
+          "location": { "type": "string" },
+          "coordinates": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            }
+          },
+          "timezone": { "type": "string", "nullable": true }
+        }
+      },
+      "WesternChart": {
+        "type": "object",
+        "description": "Western (Tropical) chart with Sun, Moon, 8 planets, aspects, houses, dignity, and balance.",
+        "properties": {
+          "system": { "type": "string" },
+          "ascendant": { "type": "object", "description": "Rising sign with degree, element, modality" },
+          "midheaven": { "type": "object", "description": "MC with degree, element, modality" },
+          "sun": { "type": "object", "description": "Sun sign, degree, dignity (domicile/exalted/detriment/fall/neutral)" },
+          "moon": { "type": "object", "description": "Moon sign, degree, dignity" },
+          "northNode": { "type": "object" },
+          "planets": {
+            "type": "object",
+            "description": "Mercury through Pluto: sign, degree, dignity, retrograde status",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "sign": { "type": "string" },
+                "degree": { "type": "number" },
+                "dignity": { "type": "string" },
+                "retrograde": { "type": "boolean" }
+              }
+            }
+          },
+          "aspects": {
+            "type": "array",
+            "description": "Planetary aspects (conjunctions, trines, squares, etc.) sorted by tightest orb",
+            "items": {
+              "type": "object",
+              "properties": {
+                "planet1": { "type": "string" },
+                "planet2": { "type": "string" },
+                "aspect": { "type": "string" },
+                "orb": { "type": "number" }
+              }
+            }
+          },
+          "houses": {
+            "type": "object",
+            "description": "Whole sign houses 1-12 with sign and planets",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "sign": { "type": "string" },
+                "planets": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "elementBalance": { "type": "object", "description": "Fire, Earth, Air, Water counts" },
+          "modalityBalance": { "type": "object", "description": "Cardinal, Fixed, Mutable counts" }
+        }
+      },
+      "VedicChart": {
+        "type": "object",
+        "description": "Vedic (Sidereal) chart with Lagna, planets, nakshatras, navamsa, dignity, retrograde, houses, and Vimshottari dasha.",
+        "properties": {
+          "system": { "type": "string" },
+          "ayanamsa": { "type": "number", "description": "Lahiri ayanamsa offset in degrees" },
+          "lagna": { "type": "object", "description": "Sidereal ascendant" },
+          "sun": { "type": "object", "description": "Sun with nakshatra, navamsa, dignity" },
+          "moon": { "type": "object", "description": "Moon with nakshatra, navamsa, dignity" },
+          "planets": {
+            "type": "object",
+            "description": "Mercury, Venus, Mars, Jupiter, Saturn, Rahu, Ketu with nakshatra, navamsa, dignity, retrograde",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "sign": { "type": "string" },
+                "nakshatra": { "type": "string" },
+                "pada": { "type": "integer" },
+                "dignity": { "type": "string" },
+                "navamsa": { "type": "string" },
+                "retrograde": { "type": "boolean" }
+              }
+            }
+          },
+          "houses": { "type": "object", "description": "Whole sign houses 1-12" },
+          "dasha": {
+            "type": "object",
+            "description": "Current Vimshottari Mahadasha and Antardasha periods",
+            "properties": {
+              "mahadasha": {
+                "type": "object",
+                "properties": {
+                  "planet": { "type": "string" },
+                  "start": { "type": "string" },
+                  "end": { "type": "string" }
+                }
+              },
+              "antardasha": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "planet": { "type": "string" },
+                  "start": { "type": "string" },
+                  "end": { "type": "string" }
+                }
+              },
+              "sequence": {
+                "type": "array",
+                "description": "Full 120-year dasha sequence (9 periods)"
+              }
+            }
+          }
+        }
+      },
+      "ChineseChart": {
+        "type": "object",
+        "description": "Chinese BaZi / Four Pillars chart with Day Master, pillars, hidden stems, Ten Gods, element balance, special palaces, NaYin, Xun Kong, and Luck Pillars.",
+        "properties": {
+          "system": { "type": "string" },
+          "animal": { "type": "string", "description": "Chinese zodiac animal year" },
+          "dayMaster": {
+            "type": "object",
+            "description": "Day Master element, yin/yang, and description",
+            "properties": {
+              "element": { "type": "string" },
+              "yinYang": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "pillars": {
+            "type": "object",
+            "description": "Year, Month, Day, Hour pillars with stems, branches, hidden stems, Ten Gods, growth phases",
+            "properties": {
+              "year": { "$ref": "#/components/schemas/Pillar" },
+              "month": { "$ref": "#/components/schemas/Pillar" },
+              "day": { "$ref": "#/components/schemas/Pillar" },
+              "hour": { "$ref": "#/components/schemas/Pillar" }
+            }
+          },
+          "elementBalance": {
+            "type": "object",
+            "description": "Five element counts with dominant and weakest",
+            "properties": {
+              "Wood": { "type": "number" },
+              "Fire": { "type": "number" },
+              "Earth": { "type": "number" },
+              "Metal": { "type": "number" },
+              "Water": { "type": "number" },
+              "dominant": { "type": "string" },
+              "weakest": { "type": "string" }
+            }
+          },
+          "specialPalaces": { "type": "object", "description": "Ming Gong, Shen Gong, Tai Yuan, Tai Xi" },
+          "naYin": { "type": "object", "description": "NaYin for each pillar (e.g. 'Gold in the Sea')" },
+          "xunKong": { "type": "object", "description": "Void branches per pillar" },
+          "luckPillars": {
+            "type": "array",
+            "description": "Da Yun (10-year luck periods)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ganZhi": { "type": "string" },
+                "startAge": { "type": "integer" },
+                "endAge": { "type": "integer" },
+                "startYear": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "Pillar": {
+        "type": "object",
+        "properties": {
+          "stem": { "type": "object", "description": "Heavenly stem: pinyin, element, yinYang" },
+          "branch": { "type": "object", "description": "Earthly branch: pinyin, animal, element" },
+          "hiddenStems": { "type": "array", "description": "Hidden stems in the branch" },
+          "tenGod": { "type": "object", "description": "Ten God relationship to Day Master" },
+          "growthPhase": { "type": "string", "description": "Twelve growth phase (Di Shi)" },
+          "full": { "type": "string", "description": "Full GanZhi name (e.g. 'Jia Zi')" }
+        }
+      }
+    }
+  }
+}

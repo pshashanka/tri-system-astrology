@@ -5,9 +5,13 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "mcp": "npx tsx mcp/server.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "astronomy-engine": "^2.1.19",
     "lunar-javascript": "^1.7.7",
     "next": "^16.1.5",
@@ -23,6 +27,7 @@
     "postcss": "^8.5.8",
     "shadcn-ui": "^0.9.5",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }
