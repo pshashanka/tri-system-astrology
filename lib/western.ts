@@ -25,6 +25,33 @@ const MODALITIES: Record<string, string> = {
 
 const PLANETS = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'] as const;
 
+/**
+ * Ptolemaic essential dignities: domicile, exaltation, detriment, fall.
+ * Keys are lowercase body names; values map sign indices to dignity label.
+ */
+const DIGNITY: Record<string, { domicile: number[]; exaltation: number; detriment: number[]; fall: number }> = {
+  sun:     { domicile: [4],    exaltation: 0,  detriment: [10],   fall: 6  },
+  moon:    { domicile: [3],    exaltation: 1,  detriment: [9],    fall: 7  },
+  mercury: { domicile: [2, 5], exaltation: 5,  detriment: [8, 11], fall: 11 },
+  venus:   { domicile: [1, 6], exaltation: 11, detriment: [7, 0],  fall: 5  },
+  mars:    { domicile: [0, 7], exaltation: 9,  detriment: [1, 6],  fall: 3  },
+  jupiter: { domicile: [8, 11],exaltation: 3,  detriment: [2, 5],  fall: 9  },
+  saturn:  { domicile: [9, 10],exaltation: 6,  detriment: [3, 4],  fall: 0  },
+  uranus:  { domicile: [10],   exaltation: 7,  detriment: [4],     fall: 1  },
+  neptune: { domicile: [11],   exaltation: 3,  detriment: [5],     fall: 9  },
+  pluto:   { domicile: [7],    exaltation: 0,  detriment: [1],     fall: 6  },
+};
+
+function getDignity(body: string, signIndex: number): string {
+  const d = DIGNITY[body];
+  if (!d) return 'neutral';
+  if (d.domicile.includes(signIndex)) return 'domicile';
+  if (signIndex === d.exaltation) return 'exalted';
+  if (d.detriment.includes(signIndex)) return 'detriment';
+  if (signIndex === d.fall) return 'fall';
+  return 'neutral';
+}
+
 interface AspectDef {
   name: string;
   angle: number;
@@ -51,6 +78,7 @@ interface SignInfo {
 
 interface PlanetInfo extends SignInfo {
   retrograde: boolean;
+  dignity: string;
 }
 
 interface Aspect {
@@ -66,12 +94,16 @@ interface House {
   planets: string[];
 }
 
+interface LuminaryInfo extends SignInfo {
+  dignity: string;
+}
+
 export interface WesternChart {
   system: string;
   ascendant: SignInfo;
   midheaven: SignInfo;
-  sun: SignInfo;
-  moon: SignInfo;
+  sun: LuminaryInfo;
+  moon: LuminaryInfo;
   northNode: SignInfo;
   planets: Record<string, PlanetInfo>;
   houses: Record<number, House>;
@@ -201,20 +233,34 @@ function computeHouses(ascDeg: number): { houses: Record<number, House>; ascSign
 }
 
 export function calculateWesternChart(date: Date, lat: number, lng: number): WesternChart {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error('Invalid date parameter');
+  }
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    throw new Error(`Invalid latitude: ${lat}`);
+  }
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+    throw new Error(`Invalid longitude: ${lng}`);
+  }
+
   const { asc: ascDeg, mc: mcDeg } = computeAngles(date, lat, lng);
   const ascInfo = degToSign(ascDeg);
   const mcInfo = degToSign(mcDeg);
 
-  const sun = degToSign(getPlanetLongitude('Sun', date));
-  const moon = degToSign(getPlanetLongitude('Moon', date));
+  const sunInfo = degToSign(getPlanetLongitude('Sun', date));
+  const sun: LuminaryInfo = { ...sunInfo, dignity: getDignity('sun', Math.floor(sunInfo.longitude / 30)) };
+  const moonInfo = degToSign(getPlanetLongitude('Moon', date));
+  const moon: LuminaryInfo = { ...moonInfo, dignity: getDignity('moon', Math.floor(moonInfo.longitude / 30)) };
   const northNode = degToSign(getMeanNorthNode(date));
 
   const planets: Record<string, PlanetInfo> = {};
   for (const name of PLANETS) {
     const info = degToSign(getPlanetLongitude(name, date));
-    planets[name.toLowerCase()] = {
+    const key = name.toLowerCase();
+    planets[key] = {
       ...info,
       retrograde: isRetrograde(name, date),
+      dignity: getDignity(key, Math.floor(info.longitude / 30)),
     };
   }
 

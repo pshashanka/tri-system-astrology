@@ -28,8 +28,7 @@ Guidelines:
 - Be specific to the actual chart data — reference real positions, signs, and aspects
 - Avoid generic horoscope language; give personalized, data-driven insights
 - Each section should be 150–250 words
-- Use an authoritative but warm, accessible tone
-- Do not disclaim that you are an AI`;
+- Use an authoritative but warm, accessible tone`;
 
 interface ReadingSections {
   vedic: string;
@@ -61,13 +60,13 @@ export async function generateReading(
   const userPrompt = `Here is the complete birth chart data from three astrological systems. Please provide a full reading.
 
 ### Western (Tropical) Chart
-${JSON.stringify(westernChart, null, 2)}
+${JSON.stringify(westernChart)}
 
 ### Vedic (Sidereal) Chart  
-${JSON.stringify(vedicChart, null, 2)}
+${JSON.stringify(vedicChart)}
 
 ### Chinese (BaZi) Chart
-${JSON.stringify(chineseChart, null, 2)}`;
+${JSON.stringify(chineseChart)}`;
 
   // Retry up to 3 times with exponential backoff on rate-limit errors (429)
   let lastError: unknown;
@@ -81,8 +80,11 @@ ${JSON.stringify(chineseChart, null, 2)}`;
         ],
         temperature: 0.8,
         max_tokens: 3000,
-      });
+      }, { timeout: 30000 });
 
+      if (!response.choices || response.choices.length === 0) {
+        throw new Error('OpenAI returned no choices');
+      }
       const content = response.choices[0].message.content || '';
       return {
         raw: content,
@@ -92,8 +94,11 @@ ${JSON.stringify(chineseChart, null, 2)}`;
       };
     } catch (err: any) {
       lastError = err;
-      const isRateLimit = err?.status === 429 || err?.error?.type === 'requests';
-      if (!isRateLimit || attempt === 2) throw err;
+      const status = err?.status;
+      const isRetryable =
+        status === 429 || status === 500 || status === 502 || status === 503 || status === 504 ||
+        err?.code === 'ECONNRESET' || err?.code === 'ETIMEDOUT';
+      if (!isRetryable || attempt === 2) throw err;
       await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1000));
     }
   }
@@ -108,15 +113,15 @@ function parseSections(text: string): ReadingSections {
     synthesis: '',
   };
 
-  const vedicMatch = text.match(/## Vedic.*?\n([\s\S]*?)(?=## Western|## Chinese|## Unified|$)/i);
-  const westernMatch = text.match(/## Western.*?\n([\s\S]*?)(?=## Vedic|## Chinese|## Unified|$)/i);
-  const chineseMatch = text.match(/## Chinese.*?\n([\s\S]*?)(?=## Vedic|## Western|## Unified|$)/i);
-  const synthesisMatch = text.match(/## Unified.*?\n([\s\S]*?)$/i);
-
-  if (vedicMatch) sections.vedic = vedicMatch[1].trim();
-  if (westernMatch) sections.western = westernMatch[1].trim();
-  if (chineseMatch) sections.chinese = chineseMatch[1].trim();
-  if (synthesisMatch) sections.synthesis = synthesisMatch[1].trim();
+  const sectionRegex = /##\s+(Vedic|Western|Chinese|Unified)[^\n]*\n([\s\S]*?)(?=##\s+(?:Vedic|Western|Chinese|Unified)|$)/gi;
+  for (const match of text.matchAll(sectionRegex)) {
+    const header = match[1].toLowerCase();
+    const content = match[2].trim();
+    if (header === 'vedic') sections.vedic = content;
+    else if (header === 'western') sections.western = content;
+    else if (header === 'chinese') sections.chinese = content;
+    else if (header === 'unified') sections.synthesis = content;
+  }
 
   return sections;
 }

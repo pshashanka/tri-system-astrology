@@ -98,6 +98,22 @@ function toSidereal(tropicalDeg: number, ayanamsa: number): number {
   return ((tropicalDeg - ayanamsa) % 360 + 360) % 360;
 }
 
+/**
+ * Detect retrograde via numerical differentiation of ecliptic longitude.
+ */
+function isRetrograde(body: string, date: Date): boolean {
+  if (body === 'Sun' || body === 'Moon') return false;
+  const dt = 0.01; // ~14.4 minutes
+  const d1 = new Date(date.getTime() - dt * 86400000);
+  const d2 = new Date(date.getTime() + dt * 86400000);
+  const l1 = Astronomy.Ecliptic(Astronomy.GeoVector(body as Astronomy.Body, d1, true)).elon;
+  const l2 = Astronomy.Ecliptic(Astronomy.GeoVector(body as Astronomy.Body, d2, true)).elon;
+  let diff = l2 - l1;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return diff < 0;
+}
+
 interface SignInfo {
   sign: string;
   degree: number;
@@ -283,6 +299,7 @@ interface VedicPlanetInfo extends SignInfo {
   nakshatra: NakshatraInfo;
   navamsa: string;
   dignity: string;
+  retrograde: boolean;
 }
 
 interface House {
@@ -302,6 +319,16 @@ export interface VedicChart {
 }
 
 export function calculateVedicChart(date: Date, lat: number, lng: number): VedicChart {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error('Invalid date parameter');
+  }
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    throw new Error(`Invalid latitude: ${lat}`);
+  }
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+    throw new Error(`Invalid longitude: ${lng}`);
+  }
+
   const jd = dateToJD(date);
   const ayanamsa = lahiriAyanamsa(jd);
 
@@ -316,6 +343,7 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
     nakshatra: getNakshatra(sidSun),
     navamsa: getNavamsaSign(sidSun),
     dignity: getDignity('sun', degToSign(sidSun).signIndex),
+    retrograde: false,
   };
 
   const tropMoon = getTropicalLongitude('Moon', date);
@@ -325,6 +353,7 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
     nakshatra: getNakshatra(sidMoon),
     navamsa: getNavamsaSign(sidMoon),
     dignity: getDignity('moon', degToSign(sidMoon).signIndex),
+    retrograde: false,
   };
 
   const planets: Record<string, VedicPlanetInfo> = {};
@@ -338,6 +367,7 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
       nakshatra: getNakshatra(sid),
       navamsa: getNavamsaSign(sid),
       dignity: getDignity(key, info.signIndex),
+      retrograde: isRetrograde(name, date),
     };
   }
 
@@ -352,12 +382,14 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
     nakshatra: getNakshatra(rahuSid),
     navamsa: getNavamsaSign(rahuSid),
     dignity: getDignity('rahu', rahuInfo.signIndex),
+    retrograde: false,
   };
   planets.ketu = {
     ...ketuInfo,
     nakshatra: getNakshatra(ketuSid),
     navamsa: getNavamsaSign(ketuSid),
     dignity: getDignity('ketu', ketuInfo.signIndex),
+    retrograde: false,
   };
 
   const lagnaSignIdx = lagna.signIndex;
