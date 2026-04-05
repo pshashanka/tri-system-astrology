@@ -90,9 +90,10 @@ describe('geocode', () => {
       expect(result.lng).toBeCloseTo(-74.006, 4);
       expect(result.displayName).toBe('New York, NY, USA');
       expect(result.timezone).toBe('America/New_York');
+      expect(calls.some((url) => url.includes('bigdatacloud'))).toBe(true);
     });
 
-    it('returns null timezone when BigDataCloud fails', async () => {
+    it('falls back to Open-Meteo when BigDataCloud fails', async () => {
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('nominatim')) {
           return Promise.resolve({
@@ -103,16 +104,21 @@ describe('geocode', () => {
               ]),
           });
         }
-        // Simulate BigDataCloud failure
-        return Promise.reject(new Error('network error'));
+        if (url.includes('bigdatacloud')) {
+          return Promise.reject(new Error('network error'));
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ timezone: 'America/New_York' }),
+        });
       });
 
       const result = await geocode('New York');
       expect(result.lat).toBeCloseTo(40.7128, 4);
-      expect(result.timezone).toBeNull();
+      expect(result.timezone).toBe('America/New_York');
     });
 
-    it('returns null timezone when ianaTimeId is empty string', async () => {
+    it('falls back to Open-Meteo when BigDataCloud returns empty timezone', async () => {
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('nominatim')) {
           return Promise.resolve({
@@ -125,8 +131,31 @@ describe('geocode', () => {
         }
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ ianaTimeId: '' }),
+          json: () => Promise.resolve(
+            url.includes('bigdatacloud')
+              ? { ianaTimeId: '' }
+              : { timezone: 'America/New_York' }
+          ),
         });
+      });
+
+      const result = await geocode('New York');
+      expect(result.timezone).toBe('America/New_York');
+    });
+
+    it('returns null timezone when both timezone providers fail', async () => {
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('nominatim')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve([
+                { lat: '40.7128', lon: '-74.006', display_name: 'New York' },
+              ]),
+          });
+        }
+
+        return Promise.reject(new Error('network error'));
       });
 
       const result = await geocode('New York');

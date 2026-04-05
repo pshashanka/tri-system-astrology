@@ -6,6 +6,7 @@
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const TIMEZONE_URL = 'https://api.bigdatacloud.net/data/timezone-by-location';
+const TIMEZONE_FALLBACK_URL = 'https://api.open-meteo.com/v1/forecast';
 const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 const FETCH_TIMEOUT_MS = 5000;
 
@@ -14,6 +15,54 @@ export interface GeocodeResult {
   lng: number;
   displayName: string;
   timezone: string | null;
+}
+
+async function fetchWithTimeout(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function lookupTimezone(lat: number, lng: number): Promise<string | null> {
+  try {
+    const tzRes = await fetchWithTimeout(`${TIMEZONE_URL}?latitude=${lat}&longitude=${lng}`);
+    if (tzRes.ok) {
+      const tzData = await tzRes.json();
+      if (typeof tzData.ianaTimeId === 'string' && tzData.ianaTimeId.length > 0) {
+        return tzData.ianaTimeId;
+      }
+    }
+  } catch (err) {
+    console.error('Primary timezone lookup failed:', err);
+  }
+
+  try {
+    const params = new URLSearchParams({
+      latitude: String(lat),
+      longitude: String(lng),
+      current: 'temperature_2m',
+      timezone: 'auto',
+    });
+    const fallbackRes = await fetchWithTimeout(`${TIMEZONE_FALLBACK_URL}?${params}`);
+    if (fallbackRes.ok) {
+      const fallbackData = await fallbackRes.json();
+      if (typeof fallbackData.timezone === 'string' && fallbackData.timezone.length > 0) {
+        return fallbackData.timezone;
+      }
+    }
+  } catch (err) {
+    console.error('Fallback timezone lookup failed:', err);
+  }
+
+  return null;
 }
 
 export async function geocode(locationText: string): Promise<GeocodeResult> {
@@ -31,17 +80,7 @@ export async function geocode(locationText: string): Promise<GeocodeResult> {
     limit: '1',
   });
 
-  const geoController = new AbortController();
-  const geoTimeout = setTimeout(() => geoController.abort(), FETCH_TIMEOUT_MS);
-  let res: Response;
-  try {
-    res = await fetch(`${NOMINATIM_URL}?${params}`, {
-      headers: { 'User-Agent': USER_AGENT },
-      signal: geoController.signal,
-    });
-  } finally {
-    clearTimeout(geoTimeout);
-  }
+  const res = await fetchWithTimeout(`${NOMINATIM_URL}?${params}`);
 
   if (!res.ok) {
     throw new Error(`Geocoding failed: ${res.status}`);
@@ -67,28 +106,7 @@ export async function geocode(locationText: string): Promise<GeocodeResult> {
     throw new Error(`Invalid longitude from geocoder: ${rawLng}`);
   }
 
-  let timezone: string | null = null;
-  try {
-    const tzController = new AbortController();
-    const tzTimeout = setTimeout(() => tzController.abort(), FETCH_TIMEOUT_MS);
-    let tzRes: Response;
-    try {
-      tzRes = await fetch(`${TIMEZONE_URL}?latitude=${lat}&longitude=${lng}`, {
-        headers: { 'User-Agent': USER_AGENT },
-        signal: tzController.signal,
-      });
-    } finally {
-      clearTimeout(tzTimeout);
-    }
-    if (tzRes.ok) {
-      const tzData = await tzRes.json();
-      if (typeof tzData.ianaTimeId === 'string' && tzData.ianaTimeId.length > 0) {
-        timezone = tzData.ianaTimeId;
-      }
-    }
-  } catch (err) {
-    console.error('Timezone lookup failed:', err);
-  }
+  const timezone = await lookupTimezone(lat, lng);
 
   return {
     lat,
