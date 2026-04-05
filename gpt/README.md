@@ -3,25 +3,23 @@
 ## Prerequisites
 
 1. A **ChatGPT Plus/Team/Enterprise** account (GPT creation requires a paid plan)
-2. Your app **deployed to Vercel** (or any public URL)
+2. Your API **deployed to Railway** (or any public URL)
 3. An **API key** generated for authentication
 
-## Step 1: Deploy to Vercel
+## Step 1: Deploy the API
 
 ```bash
-# Install Vercel CLI if needed
-npm i -g vercel
+# Build and run locally first
+npm run build
+npm start
 
-# Deploy from project root
-vercel
-
-# Set environment variables in Vercel dashboard:
+# Then deploy the Dockerized app to Railway and set:
 # - ASTRO_API_KEY: your generated API key (see below)
 # - UPSTASH_REDIS_REST_URL: from Upstash dashboard
 # - UPSTASH_REDIS_REST_TOKEN: from Upstash dashboard
 ```
 
-Note your deployment URL (e.g., `https://tri-system-astrology.vercel.app`).
+Note your deployment URL (e.g., `https://tri-system-astrology-production.up.railway.app`).
 
 ## Step 2: Generate an API Key
 
@@ -30,7 +28,7 @@ Note your deployment URL (e.g., `https://tri-system-astrology.vercel.app`).
 openssl rand -hex 32
 ```
 
-Add this as `ASTRO_API_KEY` in your Vercel environment variables.
+Add this as `ASTRO_API_KEY` in your Railway environment variables.
 
 ## Step 3: Update OpenAPI Schema
 
@@ -39,7 +37,7 @@ Edit `public/openapi.json` and replace `YOUR_DOMAIN` in the servers array:
 ```json
 "servers": [
   {
-    "url": "https://tri-system-astrology.vercel.app",
+      "url": "https://tri-system-astrology-production.up.railway.app",
     "description": "Production"
   }
 ]
@@ -100,18 +98,18 @@ Copy the entire contents of `gpt/instructions.md` into the **Instructions** fiel
 
 | Issue | Fix |
 |-------|-----|
-| "Authentication failed" | Check ASTRO_API_KEY matches in Vercel env vars and GPT Action auth |
+| "Authentication failed" | Check ASTRO_API_KEY matches in Railway env vars and GPT Action auth |
 | "Too many requests" | Rate limit is 10/min per IP. Wait and retry. |
 | "Location not found" | Try a more specific location name, or use geocodeLocation first |
 | Actions not detected | Verify openapi.json is accessible at your deployment URL |
-| Timeout errors | Consider upgrading to Vercel Pro (60s function timeout vs 10s hobby) |
+| Timeout errors | Check Railway logs and confirm upstream APIs are responding within the request window |
 
 ## Setting Up Upstash Redis (Free Tier)
 
 1. Go to [https://console.upstash.com](https://console.upstash.com)
 2. Create a new Redis database (free tier)
 3. Copy the **REST URL** and **REST Token**
-4. Add to Vercel environment variables:
+4. Add to Railway environment variables:
    - `UPSTASH_REDIS_REST_URL`
    - `UPSTASH_REDIS_REST_TOKEN`
 

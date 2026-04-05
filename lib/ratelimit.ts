@@ -11,6 +11,9 @@ export interface RateLimitResult {
   remaining: number;
 }
 
+type HeaderValue = string | string[] | undefined;
+type HeaderMap = Headers | Record<string, HeaderValue>;
+
 let ratelimit: Ratelimit | null = null;
 
 function getRatelimit(): Ratelimit | null {
@@ -48,10 +51,26 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
 }
 
 /**
- * Extract client IP from Next.js request headers.
+ * Extract client IP from proxied request headers.
  */
-export function getClientIp(headers: Record<string, string | string[] | undefined>, socketAddress?: string): string {
-  const forwarded = headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
+export function getClientIp(headers: HeaderMap, socketAddress?: string): string {
+  const forwarded = getHeader(headers, 'x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+
+  const realIp = getHeader(headers, 'x-real-ip');
+  if (realIp) return realIp;
+
   return socketAddress || 'unknown';
+}
+
+function getHeader(headers: HeaderMap, name: string): string | undefined {
+  if (headers instanceof Headers) {
+    return headers.get(name) ?? undefined;
+  }
+
+  const value = headers[name.toLowerCase()] ?? headers[name];
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
 }

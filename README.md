@@ -1,13 +1,24 @@
-# GitHub Codespaces ♥️ Next.js
+# Tri-System Astrology API
 
-Welcome to your shiny new Codespace running Next.js! We've got everything fired up and running for you to explore Next.js.
+This repository now runs as an API-first Hono service for tri-system astrology calculations, designed for Custom GPT Actions, MCP clients, and other HTTP consumers.
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+## Scripts
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
-
-To run this application:
-
-```
+```bash
 npm run dev
+npm run build
+npm start
+npm test
+npm run mcp
 ```
+
+## HTTP Endpoints
+
+- `GET /health`
+- `GET /openapi.json`
+- `GET /api/v1/geocode`
+- `POST /api/v1/charts`
+
+## Deployment
+
+The service is intended to run in Docker on Railway. Configure the environment variables from `.env.example`, then update `public/openapi.json` with your deployed domain before importing the action into ChatGPT.

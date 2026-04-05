@@ -3,18 +3,31 @@
  * Validates Authorization header against ASTRO_API_KEY environment variable.
  */
 
-import type { NextApiRequest } from 'next';
-
 export interface AuthResult {
   valid: boolean;
   error?: string;
+}
+
+type HeaderValue = string | string[] | undefined;
+type HeaderMap = Headers | Record<string, HeaderValue>;
+
+function getHeader(headers: HeaderMap, name: string): string | undefined {
+  if (headers instanceof Headers) {
+    return headers.get(name) ?? undefined;
+  }
+
+  const value = headers[name.toLowerCase()] ?? headers[name];
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
 }
 
 /**
  * Authenticate a request using Bearer token.
  * If ASTRO_API_KEY is not set, allows all requests (dev mode).
  */
-export function authenticateRequest(req: NextApiRequest): AuthResult {
+export function authenticateRequest(headers: HeaderMap): AuthResult {
   const expectedKey = process.env.ASTRO_API_KEY;
 
   if (!expectedKey) {
@@ -22,7 +35,7 @@ export function authenticateRequest(req: NextApiRequest): AuthResult {
     return { valid: true };
   }
 
-  const authHeader = req.headers.authorization;
+  const authHeader = getHeader(headers, 'authorization');
   if (!authHeader) {
     return { valid: false, error: 'Missing Authorization header. Use: Bearer <API_KEY>' };
   }

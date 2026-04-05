@@ -3,38 +3,51 @@
  * Whitelists OpenAI GPT Action origins + allows local development.
  */
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-
 const ALLOWED_ORIGINS = new Set([
   'https://chatgpt.com',
   'https://chat.openai.com',
 ]);
 
-/**
- * Apply CORS headers. Returns true if this was an OPTIONS preflight (caller should return early).
- */
-export function applyCors(req: NextApiRequest, res: NextApiResponse): boolean {
-  const origin = req.headers.origin || '';
+function getConfiguredOrigins(): string[] {
+  const configured = process.env.CORS_ALLOWED_ORIGINS;
+  if (!configured) {
+    return [];
+  }
 
-  // In development, allow any origin; in production, whitelist
-  const isAllowed =
+  return configured
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+export function isAllowedOrigin(origin: string): boolean {
+  if (!origin) {
+    return false;
+  }
+
+  return (
     process.env.NODE_ENV === 'development' ||
     ALLOWED_ORIGINS.has(origin) ||
-    origin.endsWith('.vercel.app');
+    origin.endsWith('.railway.app') ||
+    origin.endsWith('.up.railway.app') ||
+    getConfiguredOrigins().includes(origin)
+  );
+}
 
-  if (isAllowed && origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+/**
+ * Build CORS headers for API responses and OPTIONS preflights.
+ */
+export function createCorsHeaders(origin: string): Headers {
+  const headers = new Headers();
+
+  if (isAllowedOrigin(origin)) {
+    headers.set('Access-Control-Allow-Origin', origin);
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Expose-Headers', 'X-RateLimit-Remaining');
-  res.setHeader('Access-Control-Max-Age', '86400');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  headers.set('Access-Control-Expose-Headers', 'X-RateLimit-Remaining');
+  headers.set('Access-Control-Max-Age', '86400');
 
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return true;
-  }
-
-  return false;
+  return headers;
 }

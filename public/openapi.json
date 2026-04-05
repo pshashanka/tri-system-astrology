@@ -8,7 +8,7 @@
   "servers": [
     {
       "url": "https://YOUR_DOMAIN",
-      "description": "Production — replace with your Vercel deployment URL"
+      "description": "Production — replace with your Railway deployment URL"
     }
   ],
   "security": [

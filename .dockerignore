@@ -1,0 +1,17 @@
+node_modules
+dist
+.next
+.git
+.github
+.vscode
+.devcontainer
+coverage
+__tests__
+components
+pages
+styles
+gpt
+mcp
+.vercel
+.env.local
+npm-debug.log
