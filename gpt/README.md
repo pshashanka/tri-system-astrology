@@ -33,8 +33,8 @@ Note your deployment URL (e.g., `https://tri-system-astrology-production.up.rail
 
 Before moving on, confirm these URLs work:
 
-- `https://YOUR_DOMAIN/health`
-- `https://YOUR_DOMAIN/openapi.json`
+- `https://api-production-860d.up.railway.app/health`
+- `https://api-production-860d.up.railway.app/openapi.json`
 
 ## Step 2: Generate an API Key
 
@@ -47,20 +47,20 @@ Add this as `ASTRO_API_KEY` in your Railway environment variables.
 
 ## Step 3: Update OpenAPI Schema
 
-Edit `public/openapi.json` and replace `YOUR_DOMAIN` in the servers array:
+`public/openapi.json` is now configured for the live Railway deployment:
 
 ```json
 {
    "servers": [
       {
-         "url": "https://tri-system-astrology-production.up.railway.app",
+         "url": "https://api-production-860d.up.railway.app",
          "description": "Production"
       }
    ]
 }
 ```
 
-Redeploy after making this change.
+If the Railway domain changes later, update the `servers[0].url` field and redeploy.
 
 ## Step 4: Create the GPT
 
@@ -86,8 +86,8 @@ The GPT is designed to call the API for chart data and then synthesize the readi
 ## Step 5: Configure Actions
 
 1. Click **"Create new action"**
-2. In the **Schema** field, paste the contents of your OpenAPI spec from: `https://YOUR_DOMAIN/openapi.json`
-   - Or click **"Import from URL"** and enter: `https://YOUR_DOMAIN/openapi.json`
+2. In the **Schema** field, paste the contents of your OpenAPI spec from: `https://api-production-860d.up.railway.app/openapi.json`
+   - Or click **"Import from URL"** and enter: `https://api-production-860d.up.railway.app/openapi.json`
 3. The GPT Builder should auto-detect 2 actions:
    - `calculateCharts` (POST /api/v1/charts)
    - `geocodeLocation` (GET /api/v1/geocode)

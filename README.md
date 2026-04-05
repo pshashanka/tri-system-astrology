@@ -85,8 +85,8 @@ This service is intended to run in Docker on Railway.
 2. Railway will detect the `Dockerfile` automatically.
 3. Set the environment variables from `.env.example`.
 4. Deploy the service.
-5. Replace `https://YOUR_DOMAIN` in `public/openapi.json` with your actual Railway URL.
-6. Re-import or refresh the GPT Action using `https://YOUR_DOMAIN/openapi.json`.
+5. The current Railway URL is `https://api-production-860d.up.railway.app`; update it if Railway rotates or you switch domains.
+6. Re-import or refresh the GPT Action using `https://api-production-860d.up.railway.app/openapi.json`.
 
 ## Railway Notes
 
