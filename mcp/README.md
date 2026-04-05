@@ -1,6 +1,8 @@
 # MCP Server: Tri-System Astrology
 
-An MCP (Model Context Protocol) server that exposes tri-system astrology chart calculations as tools for AI assistants like Claude, Cursor, and VS Code Copilot.
+This MCP (Model Context Protocol) server exposes the shared tri-system astrology engine as local tools for AI assistants like Claude Desktop, Cursor, and VS Code Copilot.
+
+The MCP server is separate from the Railway-deployed HTTP API. It runs locally over stdio and imports the same logic from `lib/`, so it stays aligned with the API without making network calls back into your own service.
 
 ## Tools
 
@@ -20,6 +22,24 @@ Look up a location by name and return coordinates + timezone.
 
 **Parameters:**
 - `query` (required): Location search string (min 2 chars)
+
+## Requirements
+
+- Node.js 20+
+- `npm install` completed in the repo root
+- Internet access for Nominatim geocoding and BigDataCloud timezone lookup
+
+No authentication or Railway deployment is required for MCP usage.
+
+## Run Directly
+
+From the repository root:
+
+```bash
+npm run mcp
+```
+
+That starts the stdio transport server defined in `mcp/server.ts`.
 
 ## Setup
 
@@ -90,8 +110,9 @@ The AI will:
 2. Call `calculate_charts` with the date, time, and coordinates
 3. Interpret the chart data and provide an astrological reading
 
-## Requirements
+## Notes
 
-- Node.js 18+ (for native fetch and AbortController)
-- `npm install` must be run first (dependencies: astronomy-engine, lunar-javascript)
-- No API keys needed — all calculations are local, geocoding uses free public APIs
+- Use `summary: true` when you want a smaller payload for limited-context assistants.
+- The MCP server does not require `ASTRO_API_KEY` or Upstash.
+- If geocoding is not needed, provide `lat`, `lng`, and `timezone` directly to avoid an external lookup.
+- The MCP server is ideal for local IDE workflows; the Railway API is the correct integration point for Custom GPT Actions.
