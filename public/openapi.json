@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
     "title": "Tri-System Astrology API",
     "description": "Calculate birth charts across three astrological traditions: Western (Tropical), Vedic (Sidereal/Jyotish), and Chinese (BaZi/Four Pillars). Returns structured chart data for AI synthesis.",
@@ -335,7 +335,15 @@
               },
               "sequence": {
                 "type": "array",
-                "description": "Full 120-year dasha sequence (9 periods)"
+                "description": "Full 120-year dasha sequence (9 periods)",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "planet": { "type": "string" },
+                    "start": { "type": "string" },
+                    "end": { "type": "string" }
+                  }
+                }
               }
             }
           }
@@ -402,7 +410,18 @@
         "properties": {
           "stem": { "type": "object", "description": "Heavenly stem: pinyin, element, yinYang" },
           "branch": { "type": "object", "description": "Earthly branch: pinyin, animal, element" },
-          "hiddenStems": { "type": "array", "description": "Hidden stems in the branch" },
+          "hiddenStems": {
+            "type": "array",
+            "description": "Hidden stems in the branch",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pinyin": { "type": "string" },
+                "element": { "type": "string" },
+                "yinYang": { "type": "string" }
+              }
+            }
+          },
           "tenGod": { "type": "object", "description": "Ten God relationship to Day Master" },
           "growthPhase": { "type": "string", "description": "Twelve growth phase (Di Shi)" },
           "full": { "type": "string", "description": "Full GanZhi name (e.g. 'Jia Zi')" }
