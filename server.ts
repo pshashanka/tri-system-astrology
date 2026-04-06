@@ -142,6 +142,31 @@ app.get('/', (c) => {
       margin-left: auto;
       margin-right: auto;
     }
+    .hero-cta {
+      margin-top: 28px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-gpt {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0c0e1a;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(56,189,248,0.25);
+    }
+    .btn-gpt:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(56,189,248,0.35);
+    }
 
     .systems {
       display: grid;
@@ -232,6 +257,9 @@ app.get('/', (c) => {
       <div class="logo">✦</div>
       <h1>Triad Astro</h1>
       <p class="tagline">Birth chart calculations across three astrological traditions — Western, Vedic &amp; Chinese — powered by a single API.</p>
+      <div class="hero-cta">
+        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn-gpt" target="_blank" rel="noopener">✦ Try the GPT</a>
+      </div>
     </header>
 
     <section class="systems">
@@ -275,12 +303,12 @@ app.get('/', (c) => {
     </section>
 
     <section class="cta">
-      <h2>Explore the API</h2>
-      <p>View the specification or check the service health.</p>
+      <h2>Try It Now</h2>
+      <p>Get your birth chart reading across all three systems — free via ChatGPT.</p>
       <div class="cta-buttons">
-        <a href="/openapi.json" class="btn btn-primary">OpenAPI Spec</a>
-        <a href="/health" class="btn btn-secondary">Health Check</a>
-        <a href="/privacy" class="btn btn-secondary">Privacy Policy</a>
+        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn btn-primary" target="_blank" rel="noopener">✦ Open in ChatGPT</a>
+        <a href="/openapi.json" class="btn btn-secondary">API Spec</a>
+        <a href="/privacy" class="btn btn-secondary">Privacy</a>
       </div>
     </section>
 
