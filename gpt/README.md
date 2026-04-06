@@ -6,6 +6,8 @@
 2. Your API **deployed to Railway** (or another public HTTPS URL)
 3. An **API key** generated for authentication
 
+Using a custom domain is recommended for GPT Actions so the consent screen shows your branded domain instead of a Railway subdomain.
+
 ## Step 1: Deploy the API
 
 From the project root:
@@ -29,12 +31,12 @@ docker run --rm -p 3000:3000 -e ASTRO_API_KEY=test-key tri-system-astrology-api
 # - CORS_ALLOWED_ORIGINS: optional extra origins if you need browser access
 ```
 
-Note your deployment URL (e.g., `https://tri-system-astrology-production.up.railway.app`).
+Note your deployment URL (for best results, use a custom domain such as `https://api.yourdomain.com`).
 
 Before moving on, confirm these URLs work:
 
-- `https://api-production-860d.up.railway.app/health`
-- `https://api-production-860d.up.railway.app/openapi.json`
+- `https://api.yourdomain.com/health`
+- `https://api.yourdomain.com/openapi.json`
 
 ## Step 2: Generate an API Key
 
@@ -47,20 +49,20 @@ Add this as `ASTRO_API_KEY` in your Railway environment variables.
 
 ## Step 3: Update OpenAPI Schema
 
-`public/openapi.json` is now configured for the live Railway deployment:
+The published OpenAPI route now rewrites the `servers` value dynamically. Set `PUBLIC_BASE_URL` in Railway to your public HTTPS origin:
 
 ```json
 {
    "servers": [
       {
-         "url": "https://api-production-860d.up.railway.app",
+         "url": "https://api.yourdomain.com",
          "description": "Production"
       }
    ]
 }
 ```
 
-If the Railway domain changes later, update the `servers[0].url` field and redeploy.
+If you do not set `PUBLIC_BASE_URL`, the API falls back to the current request origin, which will usually be the Railway hostname.
 
 ## Step 4: Create the GPT
 
@@ -78,16 +80,18 @@ Copy the entire contents of `gpt/instructions.md` into the **Instructions** fiel
 The GPT is designed to call the API for chart data and then synthesize the reading itself. The HTTP API does not currently expose a server-side `/reading` endpoint.
 
 ### Conversation Starters
-- "I'd like a birth chart reading"
-- "Can you analyze my astrology charts?"
-- "What do the stars say about someone born on March 21, 1995?"
-- "I want to understand my BaZi chart"
+- "I'd like a full birth chart reading across Western, Vedic, and Chinese astrology."
+- "I know my birth date, time, and place. Can you interpret my chart in all three systems?"
+- "Can you compare what Western, Vedic, and BaZi each say about my personality?"
+- "What are the strongest themes in my chart across all three traditions?"
+- "I am not sure of my exact birth time. Can you still give me a useful reading and explain what is less certain?"
+- "After you calculate my chart, can you focus especially on career and relationships?"
 
 ## Step 5: Configure Actions
 
 1. Click **"Create new action"**
-2. In the **Schema** field, paste the contents of your OpenAPI spec from: `https://api-production-860d.up.railway.app/openapi.json`
-   - Or click **"Import from URL"** and enter: `https://api-production-860d.up.railway.app/openapi.json`
+2. In the **Schema** field, paste the contents of your OpenAPI spec from: `https://api.yourdomain.com/openapi.json`
+   - Or click **"Import from URL"** and enter: `https://api.yourdomain.com/openapi.json`
 3. The GPT Builder should auto-detect 2 actions:
    - `calculateCharts` (POST /api/v1/charts)
    - `geocodeLocation` (GET /api/v1/geocode)
@@ -122,6 +126,7 @@ If `ASTRO_API_KEY` is missing from the server environment, auth is effectively o
 | "Authentication failed" | Check ASTRO_API_KEY matches in Railway env vars and GPT Action auth |
 | "Too many requests" | Rate limit is 10/min per IP. Wait and retry. |
 | "Location not found" | Try a more specific location name, or use geocodeLocation first |
+| Consent prompt shows Railway branding | Attach a custom domain in Railway, set `PUBLIC_BASE_URL`, then re-import the action from your custom-domain `/openapi.json` |
 | Actions not detected | Verify openapi.json is accessible at your deployment URL |
 | Timeout errors | Check Railway logs and confirm upstream APIs are responding within the request window |
 | Preflight or browser CORS issues | Add the browser origin to `CORS_ALLOWED_ORIGINS` |

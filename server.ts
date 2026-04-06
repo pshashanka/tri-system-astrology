@@ -13,6 +13,27 @@ const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 const port = Number(process.env.PORT || 3000);
 const PRIVACY_EFFECTIVE_DATE = 'April 5, 2026';
 
+function normalizeBaseUrl(value?: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function resolvePublicBaseUrl(requestUrl: string): string {
+  return (
+    normalizeBaseUrl(process.env.PUBLIC_BASE_URL) ??
+    normalizeBaseUrl(process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null) ??
+    new URL(requestUrl).origin
+  );
+}
+
 const app = new Hono();
 
 app.use('/api/v1/*', async (c, next) => {
@@ -225,8 +246,18 @@ app.get('/privacy', (c) => {
 app.get('/openapi.json', async (c) => {
   const filePath = path.join(process.cwd(), 'public', 'openapi.json');
   const document = await readFile(filePath, 'utf8');
+  const parsed = JSON.parse(document) as Record<string, unknown>;
+  const serverUrl = resolvePublicBaseUrl(c.req.url);
+
+  parsed.servers = [
+    {
+      url: serverUrl,
+      description: 'Production',
+    },
+  ];
+
   c.header('Content-Type', 'application/json; charset=utf-8');
-  return c.body(document);
+  return c.body(JSON.stringify(parsed, null, 2));
 });
 
 app.post('/api/v1/charts', async (c) => {

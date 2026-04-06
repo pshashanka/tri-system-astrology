@@ -61,6 +61,7 @@ Required or recommended runtime configuration lives in `.env.example`:
 - `OPENAI_API_KEY`: optional, only needed if you later reintroduce server-side reading synthesis
 - `OPENAI_MODEL`: optional OpenAI model override
 - `CORS_ALLOWED_ORIGINS`: optional comma-separated list of additional browser origins
+- `PUBLIC_BASE_URL`: optional public HTTPS base URL for the published OpenAPI spec, recommended when using a custom domain
 
 If Upstash is not configured, rate limiting falls back to allow-all mode. If `ASTRO_API_KEY` is not configured, authentication falls back to allow-all mode.
 
@@ -85,14 +86,15 @@ This service is intended to run in Docker on Railway.
 2. Railway will detect the `Dockerfile` automatically.
 3. Set the environment variables from `.env.example`.
 4. Deploy the service.
-5. The current Railway URL is `https://api-production-860d.up.railway.app`; update it if Railway rotates or you switch domains.
-6. Re-import or refresh the GPT Action using `https://api-production-860d.up.railway.app/openapi.json`.
+5. If you attach a custom domain, set `PUBLIC_BASE_URL` to that HTTPS origin so `/openapi.json` advertises your branded domain instead of the raw Railway hostname.
+6. Re-import or refresh the GPT Action from your public domain, for example `https://api.yourdomain.com/openapi.json`.
 
 ## Railway Notes
 
 - The API listens on `PORT`, which Railway provides automatically.
 - CORS already allows ChatGPT origins and Railway app domains.
 - `GET /health` is available for simple health checks.
+- If `PUBLIC_BASE_URL` is unset, the OpenAPI document falls back to the Railway domain for that request.
 
 ## MCP
 
