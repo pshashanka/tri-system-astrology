@@ -68,6 +68,27 @@ const ASPECT_DEFS: AspectDef[] = [
   { name: 'Opposition', angle: 180, orb: 8 },
 ];
 
+/**
+ * Planet-specific orb modifiers.
+ * Luminaries (Sun/Moon) get wider orbs; outer planets get tighter orbs.
+ * The effective orb for a pair = base orb × average of both bodies' modifiers.
+ */
+const ORB_MODIFIERS: Record<string, number> = {
+  sun: 1.25,
+  moon: 1.25,
+  ascendant: 1.15,
+  midheaven: 1.15,
+  mercury: 1.0,
+  venus: 1.0,
+  mars: 1.0,
+  jupiter: 0.9,
+  saturn: 0.9,
+  uranus: 0.75,
+  neptune: 0.75,
+  pluto: 0.75,
+  'north node': 0.75,
+};
+
 interface SignInfo {
   sign: string;
   degree: number;
@@ -190,8 +211,13 @@ function findAspects(bodies: Record<string, { longitude: number }>): Aspect[] {
       let diff = Math.abs(a - b);
       if (diff > 180) diff = 360 - diff;
 
+      const mod1 = ORB_MODIFIERS[keys[i]] ?? 1.0;
+      const mod2 = ORB_MODIFIERS[keys[j]] ?? 1.0;
+      const orbScale = (mod1 + mod2) / 2;
+
       for (const asp of ASPECT_DEFS) {
-        if (Math.abs(diff - asp.angle) <= asp.orb) {
+        const effectiveOrb = asp.orb * orbScale;
+        if (Math.abs(diff - asp.angle) <= effectiveOrb) {
           aspects.push({
             planet1: keys[i],
             planet2: keys[j],
@@ -264,10 +290,12 @@ export function calculateWesternChart(date: Date, lat: number, lng: number): Wes
     };
   }
 
-  // Build all bodies map for aspects (Sun, Moon, North Node, and all planets)
+  // Build all bodies map for aspects (Sun, Moon, North Node, Ascendant, Midheaven, and all planets)
   const allBodies: Record<string, { longitude: number }> = {
     sun: { longitude: sun.longitude },
     moon: { longitude: moon.longitude },
+    ascendant: { longitude: ascInfo.longitude },
+    midheaven: { longitude: mcInfo.longitude },
     'north node': { longitude: northNode.longitude },
   };
   for (const [k, v] of Object.entries(planets)) {
