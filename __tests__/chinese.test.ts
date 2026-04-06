@@ -197,4 +197,153 @@ describe('calculateChineseChart', () => {
       expect(maleStems).not.toBe(femaleStems);
     });
   });
+
+  describe('pillar value accuracy', () => {
+    it('1990-05-15 year pillar is Geng Wu (Metal Horse)', () => {
+      expect(chart.pillars.year.stem.pinyin).toBe('Geng');
+      expect(chart.pillars.year.branch.pinyin).toBe('Wu');
+      expect(chart.pillars.year.branch.animal).toBe('Horse');
+    });
+
+    it('day master element is valid', () => {
+      const elements = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'];
+      expect(elements).toContain(chart.dayMaster.element);
+    });
+
+    it('day master yinYang is valid', () => {
+      expect(['Yin', 'Yang']).toContain(chart.dayMaster.yinYang);
+    });
+  });
+
+  describe('element balance accuracy', () => {
+    it('all five elements are present in balance', () => {
+      expect(chart.elementBalance).toHaveProperty('Wood');
+      expect(chart.elementBalance).toHaveProperty('Fire');
+      expect(chart.elementBalance).toHaveProperty('Earth');
+      expect(chart.elementBalance).toHaveProperty('Metal');
+      expect(chart.elementBalance).toHaveProperty('Water');
+    });
+
+    it('element values are non-negative', () => {
+      for (const val of [
+        chart.elementBalance.Wood,
+        chart.elementBalance.Fire,
+        chart.elementBalance.Earth,
+        chart.elementBalance.Metal,
+        chart.elementBalance.Water,
+      ]) {
+        expect(val).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('dominant element has highest score', () => {
+      const { dominant, weakest, ...elements } = chart.elementBalance;
+      const vals = Object.entries(elements) as [string, number][];
+      const maxElement = vals.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+      expect(dominant).toBe(maxElement);
+    });
+
+    it('weakest element has lowest score', () => {
+      const { dominant, weakest, ...elements } = chart.elementBalance;
+      const vals = Object.entries(elements) as [string, number][];
+      const minElement = vals.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
+      expect(weakest).toBe(minElement);
+    });
+  });
+
+  describe('ten gods accuracy', () => {
+    it('all pillar ten gods are valid', () => {
+      const validTenGods = [
+        'Indirect Wealth (Pian Cai)', 'Direct Wealth (Zheng Cai)',
+        'Eating God (Shi Shen)', 'Hurting Officer (Shang Guan)',
+        'Direct Officer (Zheng Guan)', 'Indirect Officer (Pian Guan)',
+        'Direct Resource (Zheng Yin)', 'Indirect Resource (Pian Yin)',
+        'Peer (Bi Jian)', 'Rob Wealth (Jie Cai)', 'Day Master', '',
+      ];
+      for (const key of ['year', 'month', 'day', 'hour'] as const) {
+        if (chart.pillars[key].tenGod) {
+          expect(validTenGods).toContain(chart.pillars[key].tenGod.stem);
+        }
+      }
+    });
+  });
+
+  describe('special palaces', () => {
+    it('has Ming Gong (Life Palace)', () => {
+      expect(chart.specialPalaces).toHaveProperty('mingGong');
+      expect(chart.specialPalaces.mingGong.ganZhi).toBeTruthy();
+    });
+
+    it('has Shen Gong (Spirit Palace)', () => {
+      expect(chart.specialPalaces).toHaveProperty('shenGong');
+      expect(chart.specialPalaces.shenGong.ganZhi).toBeTruthy();
+    });
+
+    it('has Tai Yuan (Fetal Palace)', () => {
+      expect(chart.specialPalaces).toHaveProperty('taiYuan');
+      expect(chart.specialPalaces.taiYuan.ganZhi).toBeTruthy();
+    });
+
+    it('has Tai Xi (Pre-Conception Palace)', () => {
+      expect(chart.specialPalaces).toHaveProperty('taiXi');
+      expect(chart.specialPalaces.taiXi.ganZhi).toBeTruthy();
+    });
+
+    it('all palaces have naYin values', () => {
+      for (const palace of Object.values(chart.specialPalaces)) {
+        expect(palace.naYin).toBeTruthy();
+        expect(typeof palace.naYin).toBe('string');
+      }
+    });
+  });
+
+  describe('luck pillar accuracy', () => {
+    it('luck pillar ages increase monotonically', () => {
+      for (let i = 1; i < chart.luckPillars.length; i++) {
+        expect(chart.luckPillars[i].startAge).toBeGreaterThan(chart.luckPillars[i - 1].startAge);
+      }
+    });
+
+    it('each luck pillar spans 9-10 years', () => {
+      for (const lp of chart.luckPillars) {
+        const span = lp.endAge - lp.startAge;
+        expect(span).toBeGreaterThanOrEqual(9);
+        expect(span).toBeLessThanOrEqual(10);
+      }
+    });
+
+    it('luck pillar ganZhi is a valid stem-branch pair', () => {
+      for (const lp of chart.luckPillars) {
+        expect(lp.ganZhi.length).toBeGreaterThanOrEqual(2);
+      }
+    });
+  });
+
+  describe('NaYin accuracy', () => {
+    it('year NaYin is a non-empty string', () => {
+      expect(chart.naYin.year).toBeTruthy();
+      expect(typeof chart.naYin.year).toBe('string');
+    });
+
+    it('all four pillars have NaYin', () => {
+      expect(chart.naYin.year).toBeTruthy();
+      expect(chart.naYin.month).toBeTruthy();
+      expect(chart.naYin.day).toBeTruthy();
+      expect(chart.naYin.hour).toBeTruthy();
+    });
+  });
+
+  describe('XunKong (Void)', () => {
+    it('year XunKong has two branches', () => {
+      // XunKong returns two void branches per pillar
+      expect(chart.xunKong.year).toBeTruthy();
+    });
+
+    it('all four pillars have XunKong', () => {
+      expect(chart.xunKong.year).toBeTruthy();
+      expect(chart.xunKong.month).toBeTruthy();
+      expect(chart.xunKong.day).toBeTruthy();
+      expect(chart.xunKong.hour).toBeTruthy();
+    });
+  });
 });

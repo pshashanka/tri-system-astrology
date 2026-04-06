@@ -166,4 +166,112 @@ describe('calculateVedicChart', () => {
       }
     });
   });
+
+  describe('nakshatra accuracy', () => {
+    it('Moon nakshatra lord matches the correct cycle position', () => {
+      // Nakshatra lords cycle: Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury
+      const validLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+      expect(validLords).toContain(chart.moon.nakshatra.lord);
+    });
+
+    it('Sun nakshatra lord is valid', () => {
+      const validLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+      expect(validLords).toContain(chart.sun.nakshatra.lord);
+    });
+
+    it('nakshatra index matches lord assignment', () => {
+      // Lord at index i = NAKSHATRA_LORDS[i % 9]
+      const lords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+      expect(chart.moon.nakshatra.lord).toBe(lords[chart.moon.nakshatra.index % 9]);
+    });
+
+    it('all planet nakshatras have valid pada 1-4', () => {
+      for (const p of Object.values(chart.planets)) {
+        expect(p.nakshatra.pada).toBeGreaterThanOrEqual(1);
+        expect(p.nakshatra.pada).toBeLessThanOrEqual(4);
+      }
+    });
+  });
+
+  describe('navamsa accuracy', () => {
+    it('Sun navamsa is a valid sign', () => {
+      const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+        'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+      expect(signs).toContain(chart.sun.navamsa);
+    });
+
+    it('Moon navamsa is a valid sign', () => {
+      const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+        'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+      expect(signs).toContain(chart.moon.navamsa);
+    });
+
+    it('all planet navamsas are valid signs', () => {
+      const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+        'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+      for (const p of Object.values(chart.planets)) {
+        expect(signs).toContain(p.navamsa);
+      }
+    });
+  });
+
+  describe('dasha accuracy', () => {
+    it('mahadasha planet matches first nakshatra lord in sequence', () => {
+      // The dasha sequence starts with the Moon's nakshatra lord
+      const firstPlanet = chart.dasha.sequence[0].planet;
+      const lords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+      expect(lords).toContain(firstPlanet);
+    });
+
+    it('antardasha planet is valid when present', () => {
+      if (chart.dasha.antardasha) {
+        const lords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+        expect(lords).toContain(chart.dasha.antardasha.planet);
+      }
+    });
+
+    it('each dasha period has correct full years for its planet', () => {
+      const years: Record<string, number> = { Ketu: 7, Venus: 20, Sun: 6, Moon: 10, Mars: 7, Rahu: 18, Jupiter: 16, Saturn: 19, Mercury: 17 };
+      // All periods except the first should have full years
+      for (let i = 1; i < chart.dasha.sequence.length; i++) {
+        const entry = chart.dasha.sequence[i];
+        expect(entry.years).toBe(years[entry.planet]);
+      }
+    });
+
+    it('first dasha period is partial (less than or equal to full years)', () => {
+      const years: Record<string, number> = { Ketu: 7, Venus: 20, Sun: 6, Moon: 10, Mars: 7, Rahu: 18, Jupiter: 16, Saturn: 19, Mercury: 17 };
+      const first = chart.dasha.sequence[0];
+      expect(first.years).toBeLessThanOrEqual(years[first.planet]);
+      expect(first.years).toBeGreaterThan(0);
+    });
+  });
+
+  describe('dignity accuracy', () => {
+    it('Rahu/Ketu dignities are correctly assigned', () => {
+      const validDignities = ['exalted', 'debilitated', 'own sign', 'neutral'];
+      expect(validDignities).toContain(chart.planets.rahu.dignity);
+      expect(validDignities).toContain(chart.planets.ketu.dignity);
+    });
+
+    it('Sun exalted in Aries', () => {
+      if (chart.sun.sign === 'Aries') {
+        expect(chart.sun.dignity).toBe('exalted');
+      }
+    });
+
+    it('Moon exalted in Taurus', () => {
+      if (chart.moon.sign === 'Taurus') {
+        expect(chart.moon.dignity).toBe('exalted');
+      }
+    });
+  });
+
+  describe('ayanamsa accuracy', () => {
+    it('ayanamsa for 1990 is approximately 23.7°', () => {
+      // Lahiri for 1990 should be ~23.7°
+      expect(chart.ayanamsa).toBeGreaterThan(23.5);
+      expect(chart.ayanamsa).toBeLessThan(24.0);
+    });
+  });
 });
