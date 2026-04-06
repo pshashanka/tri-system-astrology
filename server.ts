@@ -82,8 +82,8 @@ app.get('/', (c) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Triad Astro — Tri-System Astrology</title>
-  <meta name="description" content="Birth chart calculations across Western, Vedic, and Chinese astrology traditions — powered by a single API." />
+  <title>Triad Astro — AI-Powered Tri-System Astrology</title>
+  <meta name="description" content="The most complete birth chart reading available. AI synthesizes Western, Vedic, and Chinese astrology to reveal where three ancient traditions agree about your life." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
   <style>
     :root {
@@ -256,9 +256,9 @@ app.get('/', (c) => {
     <header>
       <div class="logo">✦</div>
       <h1>Triad Astro</h1>
-      <p class="tagline">Birth chart calculations across three astrological traditions — Western, Vedic &amp; Chinese — powered by a single API.</p>
+      <p class="tagline">AI reads your birth chart across three ancient traditions — Western, Vedic &amp; Chinese — and reveals where they converge for deeper, more accurate insight.</p>
       <div class="hero-cta">
-        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn-gpt" target="_blank" rel="noopener">✦ Try the GPT</a>
+        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn-gpt" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
       </div>
     </header>
 
@@ -266,48 +266,47 @@ app.get('/', (c) => {
       <div class="system-card">
         <div class="system-icon">♈</div>
         <h3>Western (Tropical)</h3>
-        <p>Sun, Moon &amp; rising signs. Planetary aspects, house placements, and elemental balance using the tropical zodiac.</p>
+        <p>Your personality, relationships &amp; life themes through Sun, Moon &amp; rising signs, planetary aspects, and elemental balance.</p>
       </div>
       <div class="system-card">
         <div class="system-icon">🕉</div>
         <h3>Vedic (Sidereal)</h3>
-        <p>Rashi, Nakshatra &amp; Pada. Navamsa chart, planetary dignity, and Vimshottari Dasha timeline using Lahiri ayanamsa.</p>
+        <p>Your karmic path and life timing through Nakshatra, Navamsa, planetary dignity, and the Vimshottari Dasha timeline.</p>
       </div>
       <div class="system-card">
         <div class="system-icon">☯</div>
         <h3>Chinese (BaZi)</h3>
-        <p>Four Pillars of Destiny. Heavenly Stems, Earthly Branches, Day Master analysis, and ten-year Luck Pillars.</p>
+        <p>Your elemental constitution and destiny through the Four Pillars, Day Master analysis, and ten-year Luck Pillars.</p>
       </div>
     </section>
 
     <section class="features">
-      <h2>Built for Precision</h2>
+      <h2>Why Three Systems Are Better Than One</h2>
       <div class="feature-grid">
         <div class="feature">
-          <div class="feature-label">Astronomy Engine</div>
-          <p>High-precision planetary positions from NASA JPL-grade ephemeris calculations.</p>
+          <div class="feature-label">Convergence = Confidence</div>
+          <p>When Western, Vedic, and Chinese charts agree on a theme, you can trust it. AI finds these patterns for you.</p>
         </div>
         <div class="feature">
-          <div class="feature-label">AI-Ready</div>
-          <p>Structured JSON output designed for GPT and LLM-powered interpretation.</p>
+          <div class="feature-label">AI-Powered Interpretation</div>
+          <p>AI reads across all three systems simultaneously, synthesizing insights no single tradition can reveal alone.</p>
         </div>
         <div class="feature">
-          <div class="feature-label">One Request</div>
-          <p>All three chart systems calculated from a single API call with birth details.</p>
+          <div class="feature-label">NASA-Grade Precision</div>
+          <p>Planetary positions calculated with the same astronomical precision used by NASA's JPL ephemeris.</p>
         </div>
         <div class="feature">
-          <div class="feature-label">Timezone Aware</div>
-          <p>Automatic timezone resolution from coordinates for accurate chart timing.</p>
+          <div class="feature-label">Accurate to the Minute</div>
+          <p>Birth time and location precisely resolved with automatic timezone detection for every chart.</p>
         </div>
       </div>
     </section>
 
     <section class="cta">
-      <h2>Try It Now</h2>
-      <p>Get your birth chart reading across all three systems — free via ChatGPT.</p>
+      <h2>Discover What All Three Systems Say About You</h2>
+      <p>Get your complete tri-system birth chart reading — analyzed by AI, free via ChatGPT.</p>
       <div class="cta-buttons">
-        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn btn-primary" target="_blank" rel="noopener">✦ Open in ChatGPT</a>
-        <a href="/openapi.json" class="btn btn-secondary">API Spec</a>
+        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn btn-primary" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
         <a href="/privacy" class="btn btn-secondary">Privacy</a>
       </div>
     </section>
