@@ -78,6 +78,7 @@ app.get('/', (c) => {
       name: 'tri-system-astrology',
       version: '1.0.0',
       docs: '/openapi.json',
+      mcpDocs: '/mcp-docs',
       health: '/health',
       privacy: '/privacy',
     });
@@ -493,6 +494,183 @@ app.get('/privacy', (c) => {
   </main>
 </body>
 </html>`);
+});
+
+app.get('/mcp-docs', (c) => {
+  c.header('Content-Type', 'text/html; charset=utf-8');
+
+  return c.html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MCP Server Documentation | Triad Astro</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --card: #fffdf8;
+      --text: #1f2937;
+      --muted: #475569;
+      --accent: #0f766e;
+      --border: #d6d3d1;
+      --shadow: rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 32px 16px;
+      background:
+        radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8f5ef 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: 0 18px 40px var(--shadow);
+    }
+
+    h1,
+    h2 {
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 2.8rem);
+    }
+
+    h2 {
+      margin-top: 28px;
+      font-size: 1.2rem;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    code {
+      background: rgba(15, 118, 110, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    .eyebrow {
+      margin: 0 0 24px;
+      color: var(--accent);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .note {
+      margin-top: 24px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--accent);
+      background: rgba(15, 118, 110, 0.08);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Triad Astro</p>
+    <h1>MCP Server Documentation</h1>
+    <p>
+      Triad Astro exposes the same tri-system astrology engine used by our REST API as a remote
+      <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a>
+      server, so AI assistants can calculate birth charts and geocode locations directly.
+    </p>
+
+    <h2>Connecting</h2>
+    <p>Server URL (Streamable HTTP transport):</p>
+    <pre>https://api.triadastro.com/api/v1/mcp</pre>
+    <p>
+      No API key, OAuth, or account is required — the endpoint is open and read-only. It is protected
+      only by per-IP rate limiting.
+    </p>
+    <ul>
+      <li><strong>Claude.ai:</strong> Settings &rarr; Connectors &rarr; Add custom connector, then paste the URL above.</li>
+      <li><strong>Claude Desktop / stdio-only clients:</strong> use the <a href="https://www.npmjs.com/package/mcp-remote" target="_blank" rel="noopener">mcp-remote</a> bridge, pointed at the URL above.</li>
+      <li><strong>Local development:</strong> run <code>npm run mcp</code> from the project to start a local stdio server using the same tool logic.</li>
+    </ul>
+
+    <h2>Tools</h2>
+    <p><code>calculate_charts</code></p>
+    <ul>
+      <li>Calculates Western (Tropical), Vedic (Sidereal), and Chinese (BaZi) birth charts.</li>
+      <li>Parameters: <code>date</code> (required, YYYY-MM-DD), <code>time</code>, <code>location</code> or <code>lat</code>/<code>lng</code>/<code>timezone</code>, <code>gender</code>, <code>summary</code>.</li>
+    </ul>
+    <p><code>geocode_location</code></p>
+    <ul>
+      <li>Looks up a location by name and returns coordinates and IANA timezone.</li>
+      <li>Parameters: <code>query</code> (required, min 2 characters).</li>
+    </ul>
+
+    <h2>Authentication &amp; Rate Limits</h2>
+    <p>
+      The MCP endpoint does not require authentication. Requests are limited per IP address; if you are
+      rate limited, wait a minute before retrying.
+    </p>
+
+    <h2>Support</h2>
+    <p>
+      Questions or issues can be sent to <a href="mailto:pshashanka@gmail.com">pshashanka@gmail.com</a>.
+      See also our <a href="/privacy">Privacy Policy</a>.
+    </p>
+
+    <div class="note">
+      This page is provided as the public documentation reference for MCP directory submissions
+      (Claude Connectors Directory, ChatGPT App Directory) and for developers integrating directly.
+    </div>
+  </main>
+</body>
+</html>`);
+});
+
+app.get('/.well-known/openai-apps-challenge', (c) => {
+  const token = process.env.OPENAI_APPS_CHALLENGE_TOKEN;
+  if (!token) {
+    return c.notFound();
+  }
+
+  c.header('Content-Type', 'text/plain; charset=utf-8');
+  return c.body(token);
 });
 
 app.get('/openapi.json', async (c) => {
