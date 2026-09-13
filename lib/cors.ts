@@ -6,6 +6,7 @@
 const ALLOWED_ORIGINS = new Set([
   'https://chatgpt.com',
   'https://chat.openai.com',
+  'https://claude.ai',
 ]);
 
 function getConfiguredOrigins(): string[] {
@@ -44,9 +45,9 @@ export function createCorsHeaders(origin: string): Headers {
     headers.set('Access-Control-Allow-Origin', origin);
   }
 
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  headers.set('Access-Control-Expose-Headers', 'X-RateLimit-Remaining');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, MCP-Protocol-Version');
+  headers.set('Access-Control-Expose-Headers', 'X-RateLimit-Remaining, Mcp-Session-Id');
   headers.set('Access-Control-Max-Age', '86400');
 
   return headers;
