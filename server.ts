@@ -50,9 +50,14 @@ app.use('/api/v1/*', async (c, next) => {
     return c.body(null, 204);
   }
 
-  const auth = authenticateRequest(c.req.raw.headers);
-  if (!auth.valid) {
-    return c.json({ error: auth.error, code: 'UNAUTHORIZED' }, 401);
+  // MCP is exempt from Bearer-token auth so Claude and other MCP clients can
+  // connect without a manually-issued API key; it still goes through CORS and
+  // rate limiting above/below, and its tools are read-only/low-sensitivity.
+  if (c.req.path !== '/api/v1/mcp') {
+    const auth = authenticateRequest(c.req.raw.headers);
+    if (!auth.valid) {
+      return c.json({ error: auth.error, code: 'UNAUTHORIZED' }, 401);
+    }
   }
 
   const ip = getClientIp(c.req.raw.headers);

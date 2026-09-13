@@ -99,6 +99,18 @@ You can also run the MCP server directly:
 npm run mcp
 ```
 
+### Claude.ai (remote connector)
+
+The Railway deployment also exposes the same tools over HTTP at `/api/v1/mcp` (Streamable HTTP transport), for clients that connect over the network instead of stdio — e.g. claude.ai's remote MCP connectors. This endpoint does not require `ASTRO_API_KEY`; it's exempt from the API's Bearer-token auth since its tools are read-only, and is protected only by CORS + per-IP rate limiting.
+
+In claude.ai, go to Settings → Connectors → Add custom connector, and enter:
+
+```
+https://<your-railway-domain>/api/v1/mcp
+```
+
+No API key or additional configuration is needed.
+
 ## Example Usage
 
 Once configured, ask your AI assistant:
