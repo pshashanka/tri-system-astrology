@@ -9,6 +9,7 @@ COPY tsconfig.json tsconfig.build.json ./
 COPY types.d.ts server.ts ./
 COPY lib ./lib
 COPY public ./public
+COPY mcp ./mcp
 RUN npm run build
 
 FROM node:20-alpine AS runner
