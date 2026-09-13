@@ -613,16 +613,39 @@ app.all('/api/v1/geocode', (c) => {
   return c.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
 });
 
-// Stateful MCP transport — WebStandardStreamableHTTPServerTransport manages sessions internally
-const mcpTransport = new WebStandardStreamableHTTPServerTransport({
-  sessionIdGenerator: () => crypto.randomUUID(),
-});
-
-const mcpServer = createMcpServer();
-mcpServer.connect(mcpTransport);
+// Per-session MCP transport map: each initialize creates a fresh server+transport pair
+const mcpSessions = new Map<string, WebStandardStreamableHTTPServerTransport>();
 
 app.all('/api/v1/mcp', async (c) => {
-  const res = await mcpTransport.handleRequest(c.req.raw);
+  const sessionId = c.req.header('mcp-session-id');
+
+  if (sessionId) {
+    // Route to existing session
+    const transport = mcpSessions.get(sessionId);
+    if (!transport) {
+      return c.json({ jsonrpc: '2.0', error: { code: -32600, message: 'Session not found' }, id: null }, 404);
+    }
+    const res = await transport.handleRequest(c.req.raw);
+    return res;
+  }
+
+  // No session ID — must be a fresh initialize. Create a new server+transport pair.
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: () => crypto.randomUUID(),
+    onsessioninitialized: (id) => {
+      mcpSessions.set(id, transport);
+      // Auto-cleanup after 2 hours of inactivity
+      setTimeout(() => {
+        mcpSessions.delete(id);
+        transport.close();
+      }, 2 * 60 * 60 * 1000);
+    },
+  });
+
+  const server = createMcpServer();
+  await server.connect(transport);
+
+  const res = await transport.handleRequest(c.req.raw);
   return res;
 });
 
