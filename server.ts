@@ -7,7 +7,7 @@ import { authenticateRequest } from './lib/auth';
 import { createCorsHeaders } from './lib/cors';
 import { checkRateLimit, getClientIp } from './lib/ratelimit';
 import { summarizeCharts } from './lib/summarize';
-import { server as mcpServer } from './mcp/index.js';
+import { createMcpServer } from './mcp/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
@@ -613,11 +613,17 @@ app.all('/api/v1/geocode', (c) => {
   return c.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
 });
 
-const mcpTransport = new WebStandardStreamableHTTPServerTransport();
+// Stateful MCP transport — WebStandardStreamableHTTPServerTransport manages sessions internally
+const mcpTransport = new WebStandardStreamableHTTPServerTransport({
+  sessionIdGenerator: () => crypto.randomUUID(),
+});
+
+const mcpServer = createMcpServer();
 mcpServer.connect(mcpTransport);
 
 app.all('/api/v1/mcp', async (c) => {
-  return await mcpTransport.handleRequest(c.req.raw);
+  const res = await mcpTransport.handleRequest(c.req.raw);
+  return res;
 });
 
 app.notFound((c) => {

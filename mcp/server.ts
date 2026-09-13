@@ -3,10 +3,11 @@
  */
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { server } from './index.js';
+import { createMcpServer } from './index.js';
 
 async function main() {
   const transport = new StdioServerTransport();
+  const server = createMcpServer();
   await server.connect(transport);
 }
 
