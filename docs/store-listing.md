@@ -53,6 +53,19 @@ The exact controlled vocabulary is only visible inside each submission portal's 
 > Setup required: none — no account or credentials needed to connect or use any tool.
 > Data access: read-only. The connector does not write, store, or modify any external data; it only computes charts and returns geocoding lookups.
 
+## ChatGPT App Directory fields (tighter limits than Claude's)
+
+Final submission enforces stricter limits than the draft stage — use these directly:
+
+- **Display name (≤30 chars):** `Triad Astro`
+- **Short description (≤30 chars):** `Tri-system birth chart reader` (29 chars)
+- **Developer name (≤80 chars):** `Triad Astro` (or your legal/individual verified name, whichever you submit under)
+- **Long description:** reuse the Description block above.
+- **Domain verification:** OpenAI issues a token during submission — set it as `OPENAI_APPS_CHALLENGE_TOKEN` in Railway; it's served automatically at `https://api.triadastro.com/.well-known/openai-apps-challenge`.
+- **CSP domains:** none needed — the tools return plain text/JSON, no custom UI templates, so there's nothing for a CSP to allow-list.
+- **Screenshots:** skip this field. OpenAI only accepts screenshots when the tool scan detects a UI output template; these tools don't return one, and including screenshots anyway fails validation.
+- **Reviewer credentials:** none — state explicitly that no login/auth is required to test any tool.
+
 ## OpenAI plugin test cases
 
 **Positive (5):**

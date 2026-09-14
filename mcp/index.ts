@@ -28,6 +28,7 @@ export function createMcpServer() {
     annotations: {
       readOnlyHint: true,
       openWorldHint: true,
+      destructiveHint: false,
     },
   }, async ({ date, time, location, lat, lng, timezone, gender, summary }) => {
     try {
@@ -73,6 +74,7 @@ export function createMcpServer() {
     annotations: {
       readOnlyHint: true,
       openWorldHint: true,
+      destructiveHint: false,
     },
   }, async ({ query }) => {
     try {
