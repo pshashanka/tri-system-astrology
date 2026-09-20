@@ -87,8 +87,8 @@ function computeAscendant(date: Date, lat: number, lng: number): number {
   const latRad = (lat * Math.PI) / 180;
 
   let asc = Math.atan2(
-    -Math.cos(ramcRad),
-    Math.sin(ramcRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad)
+    Math.cos(ramcRad),
+    -(Math.sin(ramcRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad))
   );
   asc = (asc * 180) / Math.PI;
   return ((asc % 360) + 360) % 360;

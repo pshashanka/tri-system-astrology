@@ -186,8 +186,8 @@ function computeAngles(date: Date, lat: number, lng: number): { asc: number; mc:
 
   // Ascendant
   let asc = Math.atan2(
-    -Math.cos(ramcRad),
-    Math.sin(ramcRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad)
+    Math.cos(ramcRad),
+    -(Math.sin(ramcRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad))
   );
   asc = (asc * 180) / Math.PI;
   asc = ((asc % 360) + 360) % 360;
