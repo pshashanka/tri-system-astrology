@@ -727,11 +727,11 @@ app.get('/demo', (c) => {
 <body>
   <main>
     <h1>Triad Astro — demo recording</h1>
-    <video controls playsinline preload="metadata" src="/demo.mp4"></video>
+    <video controls playsinline preload="metadata" src="/demo.mp4?v=1"></video>
     <p class="muted">
       Screen recording of the Triad Astro connector in ChatGPT, showing the
       <code>calculate_charts</code> and <code>geocode_location</code> tools. Silent, 1 minute 4 seconds.
-      <a href="/demo.mp4">Download the file directly</a>.
+      <a href="/demo.mp4?v=1">Download the file directly</a>.
     </p>
     <p class="muted"><a href="/mcp-docs">MCP server documentation</a> &middot; <a href="/privacy">Privacy policy</a></p>
   </main>
@@ -882,6 +882,12 @@ app.all('/api/v1/mcp', async (c) => {
 });
 
 app.notFound((c) => {
+  // Never let a 404 be cached. The edge in front of this app applies a
+  // multi-hour default TTL to responses that do not set one, so a request
+  // arriving during a deploy - or before an env var is set, as the
+  // openai-apps-challenge route does - would pin a 404 at the edge long
+  // after the route started working.
+  c.header('Cache-Control', 'no-store');
   return c.json({ error: 'Not found', code: 'NOT_FOUND' }, 404);
 });
 
