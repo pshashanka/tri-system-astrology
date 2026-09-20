@@ -15,6 +15,7 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 const port = Number(process.env.PORT || 3000);
 const PRIVACY_EFFECTIVE_DATE = 'April 5, 2026';
+const TERMS_EFFECTIVE_DATE = 'September 20, 2026';
 
 function normalizeBaseUrl(value?: string | null): string | null {
   if (!value) {
@@ -321,7 +322,7 @@ app.get('/', (c) => {
     </section>
 
     <footer>
-      <p>&copy; ${new Date().getFullYear()} Triad Astro &middot; <a href="/privacy">Privacy</a> &middot; <a href="mailto:pshashanka@gmail.com">Contact</a></p>
+      <p>&copy; ${new Date().getFullYear()} Triad Astro &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="/support">Support</a> &middot; <a href="mailto:pshashanka@gmail.com">Contact</a></p>
     </footer>
   </div>
 </body>
@@ -495,6 +496,250 @@ app.get('/privacy', (c) => {
   </main>
 </body>
 </html>`);
+});
+
+const LEGAL_PAGE_STYLES = `
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --card: #fffdf8;
+      --text: #1f2937;
+      --muted: #475569;
+      --accent: #0f766e;
+      --border: #d6d3d1;
+      --shadow: rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 32px 16px;
+      background:
+        radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8f5ef 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: 0 18px 40px var(--shadow);
+    }
+
+    h1, h2 { color: #0f172a; line-height: 1.2; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 4vw, 2.8rem); }
+    h2 { margin-top: 28px; font-size: 1.2rem; }
+    p, li { color: var(--muted); font-size: 1rem; }
+    ul { padding-left: 20px; }
+    a { color: var(--accent); }
+
+    .eyebrow {
+      margin: 0 0 24px;
+      color: var(--accent);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .note {
+      margin-top: 24px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--accent);
+      background: rgba(15, 118, 110, 0.08);
+      border-radius: 12px;
+    }
+
+    .pagenav {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+`;
+
+/** Renders a standalone legal/support page in the same shell as /privacy. */
+function renderLegalPage(title: string, heading: string, body: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${title} | Tri-System Astrology API</title>
+  <style>${LEGAL_PAGE_STYLES}</style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Tri-System Astrology API</p>
+    <h1>${heading}</h1>
+${body}
+    <p class="pagenav">
+      <a href="/">Home</a> &middot;
+      <a href="/privacy">Privacy</a> &middot;
+      <a href="/terms">Terms</a> &middot;
+      <a href="/support">Support</a> &middot;
+      <a href="/mcp-docs">MCP docs</a>
+    </p>
+  </main>
+</body>
+</html>`;
+}
+
+app.get('/support', (c) => {
+  c.header('Content-Type', 'text/html; charset=utf-8');
+
+  return c.html(renderLegalPage('Support', 'Support', `
+    <p>
+      Triad Astro is a birth chart calculation service covering Western (tropical), Vedic
+      (sidereal), and Chinese (BaZi / Four Pillars) systems. This page explains how to get help
+      with the API, the MCP server, or the ChatGPT app.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Email <a href="mailto:pshashanka@gmail.com">pshashanka@gmail.com</a> with questions, bug
+      reports, or access requests. The service is maintained by an individual, so replies are
+      generally sent within a few business days.
+    </p>
+
+    <h2>What to Include in a Bug Report</h2>
+    <ul>
+      <li>The birth date, time, and location used, so the result can be reproduced</li>
+      <li>Which system looked wrong: Western, Vedic, or Chinese</li>
+      <li>What you expected and what you received</li>
+      <li>Whether you used the ChatGPT app, the MCP endpoint, or the HTTP API directly</li>
+      <li>The approximate time of the request, which helps locate it in the logs</li>
+    </ul>
+
+    <h2>Common Issues</h2>
+    <ul>
+      <li>
+        <strong>The ascendant or houses look wrong.</strong> These depend on an exact birth time.
+        If no time is supplied the service defaults to 12:00 noon and returns a warning; the
+        ascendant, house placements, and the Chinese hour pillar are unreliable in that case.
+      </li>
+      <li>
+        <strong>Western and Vedic signs disagree.</strong> This is expected, not an error. The two
+        traditions use different zodiacs and currently differ by roughly 24 degrees due to
+        precession.
+      </li>
+      <li>
+        <strong>A location resolved to the wrong place.</strong> Ambiguous city names can match
+        several places. Supply an explicit latitude, longitude, and IANA timezone, or a more
+        specific place name.
+      </li>
+      <li>
+        <strong>Requests are being rate limited.</strong> Limits are applied per IP address. Wait
+        a minute and retry.
+      </li>
+    </ul>
+
+    <h2>Technical Documentation</h2>
+    <p>
+      See the <a href="/mcp-docs">MCP server documentation</a> for tool definitions, and
+      <a href="/openapi.json">openapi.json</a> for the HTTP API schema. Service status can be
+      checked at <a href="/health">/health</a>.
+    </p>
+
+    <div class="note">
+      Triad Astro provides astrological chart calculations for personal interest and
+      entertainment. It does not provide medical, legal, financial, or psychological advice.
+    </div>
+  `));
+});
+
+app.get('/terms', (c) => {
+  c.header('Content-Type', 'text/html; charset=utf-8');
+
+  return c.html(renderLegalPage('Terms of Service', 'Terms of Service', `
+    <p>Effective date: ${TERMS_EFFECTIVE_DATE}</p>
+
+    <p>
+      These Terms govern your use of the Triad Astro service, including its website, HTTP API,
+      MCP server, and any ChatGPT app built on them (the &ldquo;Service&rdquo;). By using the
+      Service you agree to these Terms. If you do not agree, do not use the Service.
+    </p>
+
+    <h2>The Service</h2>
+    <p>
+      The Service calculates astrological chart data across Western (tropical), Vedic (sidereal),
+      and Chinese (BaZi / Four Pillars) systems from birth details you supply. It is operated by
+      an individual, not a registered company.
+    </p>
+
+    <h2>Not Professional Advice</h2>
+    <p>
+      Astrological output is provided for personal interest and entertainment only. It is not
+      medical, psychological, legal, financial, or professional advice of any kind, and must not
+      be relied on as a basis for any decision with real consequences. Always consult a qualified
+      professional for such matters.
+    </p>
+
+    <h2>Acceptable Use</h2>
+    <ul>
+      <li>Do not use the Service unlawfully, or to harass, deceive, or harm others</li>
+      <li>Do not attempt to disrupt, overload, or circumvent rate limits or access controls</li>
+      <li>Do not submit another person&rsquo;s personal information without a lawful basis</li>
+      <li>Do not present the Service&rsquo;s output as professional advice to third parties</li>
+    </ul>
+
+    <h2>Accuracy</h2>
+    <p>
+      Chart calculations are derived from published astronomical algorithms and third-party
+      geocoding and timezone data. Accuracy depends on the birth details you provide, particularly
+      the birth time. The Service is offered without any guarantee that its output is correct,
+      complete, or suitable for a given purpose.
+    </p>
+
+    <h2>Availability and Changes</h2>
+    <p>
+      The Service is provided on a best-effort basis and may change, be interrupted, or be
+      discontinued at any time without notice. These Terms may be updated; continued use after a
+      change constitutes acceptance of the revised Terms.
+    </p>
+
+    <h2>Privacy</h2>
+    <p>
+      Information submitted to the Service is handled as described in the
+      <a href="/privacy">Privacy Policy</a>, which forms part of these Terms.
+    </p>
+
+    <h2>Disclaimer of Warranties</h2>
+    <p>
+      The Service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;, without
+      warranties of any kind, whether express or implied, including any implied warranties of
+      merchantability, fitness for a particular purpose, and non-infringement.
+    </p>
+
+    <h2>Limitation of Liability</h2>
+    <p>
+      To the maximum extent permitted by law, the operator of the Service will not be liable for
+      any indirect, incidental, special, consequential, or exemplary damages, or for any loss of
+      data, profits, or goodwill, arising out of or relating to your use of the Service.
+    </p>
+
+    <h2>Governing Law</h2>
+    <p>
+      These Terms are governed by the laws of the State of California, United States, without
+      regard to its conflict of law provisions. Any dispute arising from these Terms or your use
+      of the Service will be subject to the exclusive jurisdiction of the state and federal courts
+      located in California.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions about these Terms can be sent to
+      <a href="mailto:pshashanka@gmail.com">pshashanka@gmail.com</a>.
+    </p>
+  `));
 });
 
 app.get('/mcp-docs', (c) => {
