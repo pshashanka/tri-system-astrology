@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { calculateAllCharts } from './lib/charts';
 import { authenticateRequest } from './lib/auth';
@@ -688,6 +689,54 @@ app.get('/openapi.json', async (c) => {
 
   c.header('Content-Type', 'application/json; charset=utf-8');
   return c.body(JSON.stringify(parsed, null, 2));
+});
+
+// Demo recording, linked from the ChatGPT app directory submission.
+// serveStatic handles HTTP range requests, so the video can be scrubbed
+// without pulling all 28MB first.
+app.use('/demo.mp4', async (c, next) => {
+  c.header('Cache-Control', 'public, max-age=86400');
+  c.header('Accept-Ranges', 'bytes');
+  await next();
+});
+app.use('/demo.mp4', serveStatic({ path: './public/demo.mp4' }));
+
+app.get('/demo', (c) => {
+  c.header('Content-Type', 'text/html; charset=utf-8');
+
+  return c.html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Recording | Triad Astro</title>
+  <style>
+    :root { color-scheme: light; --bg: #f4f1ea; --card: #fffdf8; --text: #1f2937; --muted: #475569; --border: #d6d3d1; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 32px 16px;
+      background: linear-gradient(180deg, #f8f5ef 0%, var(--bg) 100%);
+      color: var(--text); font-family: Georgia, "Times New Roman", serif; line-height: 1.65;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 32px 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+    h1 { margin-top: 0; }
+    video { width: 100%; height: auto; border-radius: 8px; background: #000; }
+    p.muted { color: var(--muted); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Triad Astro — demo recording</h1>
+    <video controls playsinline preload="metadata" src="/demo.mp4"></video>
+    <p class="muted">
+      Screen recording of the Triad Astro connector in ChatGPT, showing the
+      <code>calculate_charts</code> and <code>geocode_location</code> tools. Silent, 1 minute 4 seconds.
+      <a href="/demo.mp4">Download the file directly</a>.
+    </p>
+    <p class="muted"><a href="/mcp-docs">MCP server documentation</a> &middot; <a href="/privacy">Privacy policy</a></p>
+  </main>
+</body>
+</html>`);
 });
 
 app.post('/api/v1/charts', async (c) => {
