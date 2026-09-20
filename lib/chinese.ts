@@ -391,12 +391,16 @@ export interface ChineseChart {
  * @param gender - 1 = male, 0 = female (needed for Luck Pillar direction)
  */
 export function calculateChineseChart(date: Date, gender: number = 1): ChineseChart {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const second = date.getSeconds();
+  // `date` carries the birth wall-clock time in its UTC fields (see
+  // makeBirthDateTime), so it must be read with the UTC getters. Using the
+  // local getters would shift every pillar by the server's own UTC offset,
+  // making BaZi output depend on where the process happens to run.
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  const hour = date.getUTCHours();
+  const minute = date.getUTCMinutes();
+  const second = date.getUTCSeconds();
 
   const solar = Solar.fromYmdHms(year, month, day, hour, minute, second);
   const lunar = solar.getLunar();
