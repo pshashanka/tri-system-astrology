@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "triad-astro": {
+      "type": "http",
+      "url": "https://api.triadastro.com/api/v1/mcp"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "triad-astro",
+  "version": "1.0.0",
+  "description": "Birth chart readings across Western (tropical), Vedic (sidereal), and Chinese (BaZi / Four Pillars) astrology. Bundles the tri-system-reading skill and connects to the hosted Triad Astro MCP server, which supplies all chart positions.",
+  "author": {
+    "name": "Triad Astro",
+    "email": "pshashanka@gmail.com",
+    "url": "https://api.triadastro.com"
+  },
+  "homepage": "https://api.triadastro.com/mcp-docs",
+  "repository": "https://github.com/pshashanka/tri-system-astrology",
+  "keywords": [
+    "astrology",
+    "birth-chart",
+    "natal-chart",
+    "western-astrology",
+    "vedic",
+    "jyotish",
+    "bazi",
+    "four-pillars",
+    "horoscope"
+  ]
+}
