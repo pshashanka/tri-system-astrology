@@ -1,5 +1,6 @@
 {
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "tsc -p tsconfig.build.json",

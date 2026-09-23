@@ -9,6 +9,7 @@
   },
   "homepage": "https://api.triadastro.com/mcp-docs",
   "repository": "https://github.com/pshashanka/tri-system-astrology",
+  "license": "MIT",
   "keywords": [
     "astrology",
     "birth-chart",
