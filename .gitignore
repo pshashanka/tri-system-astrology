@@ -36,3 +36,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# plugin package build artifact (npm run plugin:zip)
+/triad-astro-plugin.zip
+/.pluginpkg

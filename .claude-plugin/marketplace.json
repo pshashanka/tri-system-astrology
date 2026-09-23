@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "triad-astro",
+  "description": "Birth chart readings across Western, Vedic and Chinese astrology, backed by the hosted Triad Astro MCP server.",
+  "owner": {
+    "name": "Triad Astro",
+    "email": "pshashanka@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "triad-astro",
+      "displayName": "Triad Astro",
+      "description": "Reads a birth chart across Western (tropical), Vedic (sidereal) and Chinese (BaZi / Four Pillars) astrology at once and shows where the three converge. All chart positions come from the hosted MCP server, never from the model.",
+      "source": "./plugin",
+      "homepage": "https://api.triadastro.com/mcp-docs"
+    }
+  ]
+}

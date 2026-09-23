@@ -6,7 +6,8 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mcp": "npx tsx mcp/server.ts"
+    "mcp": "npx tsx mcp/server.ts",
+    "plugin:zip": "rm -rf .pluginpkg triad-astro-plugin.zip && mkdir -p .pluginpkg && cp -R plugin .pluginpkg/triad-astro && (cd .pluginpkg && zip -r -X ../triad-astro-plugin.zip triad-astro >/dev/null) && rm -rf .pluginpkg && unzip -l triad-astro-plugin.zip | grep -E '\\.mcp\\.json|plugin\\.json'"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.4",
