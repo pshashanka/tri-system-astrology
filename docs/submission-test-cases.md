@@ -8,6 +8,8 @@ not written from memory.
 
 ## Positive test cases
 
+Five for the form, plus one spare. Case 6 is a swap candidate, not a sixth entry.
+
 ### 1. Full tri-system reading
 
 **Prompt**
@@ -38,8 +40,21 @@ defect, and the app should not present it as a contradiction.
 
 Recognizes that "Springfield" is ambiguous and resolves it rather than
 guessing silently. `geocode_location` returns Springfield, Sangamon County,
-Illinois, United States. The reply states which location was used so the user
-can correct it.
+Illinois as the best match, with four alternatives — Hampden County
+(Massachusetts), Greene County (Missouri), Clark County (Ohio) and Lane County
+(Oregon). The app should put that choice to the user rather than proceeding on
+the first hit.
+
+If it calls `calculate_charts` with the bare name instead, the result carries
+an ambiguity warning naming the place used and the others, and the app must
+surface it:
+
+> Location "Springfield" is ambiguous; used Springfield, Sangamon County,
+> Illinois, United States. Other matches: Springfield, Hampden County,
+> Massachusetts, United States | Springfield, Greene County, Missouri, United
+> States | Springfield, Clark County, Ohio, United States | Springfield, Lane
+> County, Oregon, United States. Confirm with the user, and recalculate with a
+> more specific location if this is the wrong place.
 
 ### 3. Unknown birth time
 
@@ -51,12 +66,14 @@ can correct it.
 
 Still produces a chart. The response carries the service warning:
 
-> No birth time provided; defaulting to 12:00 noon. Ascendant and house
-> positions may be inaccurate.
+> No birth time provided; defaulting to 12:00 noon. Time-sensitive results are
+> unreliable: the Western ascendant, midheaven and houses; the Vedic lagna,
+> houses and dasha dates (the Moon moves ~13° a day, which can shift the dasha
+> periods by years); and the Chinese hour pillar and element balance.
 
-The app must surface this rather than bury it, and should mark the ascendant,
-the Vedic lagna, house placements, and the BaZi hour pillar as provisional. It
-should not state a confident rising sign.
+The app must surface this rather than bury it, and should mark every item the
+warning names as provisional. It should not state a confident rising sign, and
+it should not present dasha dates as settled.
 
 ### 4. Explicit coordinates
 
@@ -81,6 +98,24 @@ performs no geocoding lookup. Echoes the resolved birth data back.
 Answers from the chart already returned rather than recalculating or
 inventing figures: Mercury mahadasha, 15 Dec 2025 to 15 Dec 2042, with the
 Mercury antardasha running to 12 May 2028.
+
+### 6. Moon near a nakshatra boundary — *spare, not a sixth entry*
+
+The form takes exactly five positive cases. This one is here as a swap
+candidate: it exercises the warning path harder than case 4, which only
+confirms that supplying coordinates skips the geocode call.
+
+**Prompt**
+
+> Chart for 15 June 1990, 14:30, latitude 19.055, longitude 72.8692,
+> timezone Asia/Kolkata.
+
+**Expected behavior**
+
+The chart returns normally, with an extra warning that the sidereal Moon sits
+0.02° from a nakshatra boundary (Shatabhisha). The app should present the
+Vimshottari dasha dates as tentative, because a birth time off by minutes here
+moves the nakshatra and every dasha date with it.
 
 ---
 
