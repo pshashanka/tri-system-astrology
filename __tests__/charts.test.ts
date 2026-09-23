@@ -21,6 +21,21 @@ describe('calculateAllCharts', () => {
       await expect(calculateAllCharts({ date: 'not-a-date', location: 'NYC' })).rejects.toThrow('Invalid date');
     });
 
+    it('rejects a date that is not a real calendar day', async () => {
+      // Date rolls overflow forward, so this would otherwise return a March 2
+      // chart labelled as February 30.
+      await expect(
+        calculateAllCharts({ date: '2001-02-30', time: '10:00', lat: 48.85, lng: 2.35, timezone: 'Europe/Paris' })
+      ).rejects.toThrow('not a real calendar date');
+    });
+
+    it('accepts the last valid day of a short month', async () => {
+      const result = await calculateAllCharts({
+        date: '2001-02-28', time: '10:00', lat: 48.85, lng: 2.35, timezone: 'Europe/Paris',
+      });
+      expect(result.birthData.date).toBe('2001-02-28');
+    });
+
     it('throws when neither location nor coordinates provided', async () => {
       await expect(calculateAllCharts({ date: '1990-05-15' })).rejects.toThrow('Either location or lat/lng');
     });

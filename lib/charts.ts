@@ -48,8 +48,15 @@ export async function calculateAllCharts(input: ChartInput): Promise<ChartResult
 
   // Validate date
   if (!input.date) throw new Error('Birth date is required');
-  if (isNaN(new Date(`${input.date}T${timeStr}:00Z`).getTime())) {
+  const parsedDate = new Date(`${input.date}T${timeStr}:00Z`);
+  if (isNaN(parsedDate.getTime())) {
     throw new Error('Invalid date or time format');
+  }
+  // Date rolls overflowing components forward, so 2001-02-30 silently becomes
+  // March 2 and the chart is returned under the date the caller asked for.
+  // Reject anything that does not survive the round trip.
+  if (parsedDate.toISOString().slice(0, 10) !== input.date) {
+    throw new Error(`Invalid date: ${input.date} is not a real calendar date`);
   }
 
   if (!input.time) {
