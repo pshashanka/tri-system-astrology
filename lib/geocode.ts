@@ -10,11 +10,32 @@ const TIMEZONE_FALLBACK_URL = 'https://api.open-meteo.com/v1/forecast';
 const USER_AGENT = 'TriSystemAstrologyApp/1.0';
 const FETCH_TIMEOUT_MS = 5000;
 
+// Nominatim often returns several hits for one town (a city node, its boundary,
+// a suburb). Candidates closer than this to an already-kept one are the same place.
+const SAME_PLACE_KM = 50;
+const MAX_CANDIDATES = 5;
+
+export interface GeocodeCandidate {
+  lat: number;
+  lng: number;
+  displayName: string;
+}
+
 export interface GeocodeResult {
   lat: number;
   lng: number;
   displayName: string;
   timezone: string | null;
+  /** Other distinct places the query also matched, best match first. Empty when unambiguous. */
+  alternatives: GeocodeCandidate[];
+}
+
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
 async function fetchWithTimeout(url: string): Promise<Response> {
@@ -77,7 +98,7 @@ export async function geocode(locationText: string): Promise<GeocodeResult> {
   const params = new URLSearchParams({
     q: trimmed,
     format: 'json',
-    limit: '1',
+    limit: String(MAX_CANDIDATES),
   });
 
   const res = await fetchWithTimeout(`${NOMINATIM_URL}?${params}`);
@@ -106,6 +127,14 @@ export async function geocode(locationText: string): Promise<GeocodeResult> {
     throw new Error(`Invalid longitude from geocoder: ${rawLng}`);
   }
 
+  const kept: GeocodeCandidate[] = [{ lat, lng, displayName: data[0].display_name }];
+  for (const item of data.slice(1)) {
+    const c = { lat: parseFloat(item?.lat), lng: parseFloat(item?.lon), displayName: item?.display_name };
+    if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng) || typeof c.displayName !== 'string') continue;
+    if (kept.some((k) => distanceKm(k, c) < SAME_PLACE_KM)) continue;
+    kept.push(c);
+  }
+
   const timezone = await lookupTimezone(lat, lng);
 
   return {
@@ -113,5 +142,6 @@ export async function geocode(locationText: string): Promise<GeocodeResult> {
     lng,
     displayName: data[0].display_name,
     timezone,
+    alternatives: kept.slice(1),
   };
 }

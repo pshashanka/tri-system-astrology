@@ -278,6 +278,19 @@ describe('calculateWesternChart', () => {
       expect(typeof chart.planets.neptune.dignity).toBe('string');
     });
 
+    it('outer planets get no exaltation or fall', () => {
+      // No agreed exaltation/fall exists for Uranus, Neptune or Pluto.
+      for (const key of ['uranus', 'neptune', 'pluto']) {
+        expect(['domicile', 'detriment', 'neutral']).toContain(chart.planets[key].dignity);
+      }
+    });
+
+    it('reports its house system and balance placements', () => {
+      expect(chart.houseSystem).toBe('Whole Sign');
+      const total = Object.values(chart.elementBalance).reduce((a, b) => a + b, 0);
+      expect(chart.balanceIncludes).toHaveLength(total);
+    });
+
     it('Uranus dignity is assigned', () => {
       expect(typeof chart.planets.uranus.dignity).toBe('string');
     });

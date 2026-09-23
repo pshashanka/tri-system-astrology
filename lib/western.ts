@@ -25,11 +25,17 @@ const MODALITIES: Record<string, string> = {
 
 const PLANETS = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'] as const;
 
+// Must match allPlacements in calculateWesternChart.
+const BALANCE_INCLUDES = ['Sun', 'Moon', 'Ascendant', 'Midheaven', ...PLANETS];
+
 /**
- * Ptolemaic essential dignities: domicile, exaltation, detriment, fall.
+ * Essential dignities: domicile, exaltation, detriment, fall.
+ * The seven classical bodies use the Ptolemaic table. The outer planets get only
+ * their modern rulerships (domicile/detriment): there is no agreed exaltation or
+ * fall for Uranus, Neptune or Pluto, so none is asserted.
  * Keys are lowercase body names; values map sign indices to dignity label.
  */
-const DIGNITY: Record<string, { domicile: number[]; exaltation: number; detriment: number[]; fall: number }> = {
+const DIGNITY: Record<string, { domicile: number[]; exaltation?: number; detriment: number[]; fall?: number }> = {
   sun:     { domicile: [4],    exaltation: 0,  detriment: [10],   fall: 6  },
   moon:    { domicile: [3],    exaltation: 1,  detriment: [9],    fall: 7  },
   mercury: { domicile: [2, 5], exaltation: 5,  detriment: [8, 11], fall: 11 },
@@ -37,9 +43,9 @@ const DIGNITY: Record<string, { domicile: number[]; exaltation: number; detrimen
   mars:    { domicile: [0, 7], exaltation: 9,  detriment: [1, 6],  fall: 3  },
   jupiter: { domicile: [8, 11],exaltation: 3,  detriment: [2, 5],  fall: 9  },
   saturn:  { domicile: [9, 10],exaltation: 6,  detriment: [3, 4],  fall: 0  },
-  uranus:  { domicile: [10],   exaltation: 7,  detriment: [4],     fall: 1  },
-  neptune: { domicile: [11],   exaltation: 3,  detriment: [5],     fall: 9  },
-  pluto:   { domicile: [7],    exaltation: 0,  detriment: [1],     fall: 6  },
+  uranus:  { domicile: [10],   detriment: [4]  },
+  neptune: { domicile: [11],   detriment: [5]  },
+  pluto:   { domicile: [7],    detriment: [1]  },
 };
 
 function getDignity(body: string, signIndex: number): string {
@@ -121,6 +127,9 @@ interface LuminaryInfo extends SignInfo {
 
 export interface WesternChart {
   system: string;
+  houseSystem: string;
+  /** Which placements elementBalance and modalityBalance count (12 in total). */
+  balanceIncludes: string[];
   ascendant: SignInfo;
   midheaven: SignInfo;
   sun: LuminaryInfo;
@@ -334,6 +343,8 @@ export function calculateWesternChart(date: Date, lat: number, lng: number): Wes
 
   return {
     system: 'Western (Tropical)',
+    houseSystem: 'Whole Sign',
+    balanceIncludes: BALANCE_INCLUDES,
     ascendant: ascInfo,
     midheaven: mcInfo,
     sun,

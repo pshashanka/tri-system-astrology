@@ -40,11 +40,11 @@ export function createMcpServer() {
         timezone: z.string().nullable().describe('IANA timezone, or null if it could not be resolved.'),
       }).describe('The birth data actually used for the calculation, after geocoding and defaulting.'),
       charts: z.object({
-        western: z.looseObject({}).describe('Western (Tropical) chart: planets, houses, aspects.'),
-        vedic: z.looseObject({}).describe('Vedic (Sidereal/Jyotish) chart: planets, houses, dashas.'),
+        western: z.looseObject({}).describe('Western (Tropical) chart: planets, houses (see houseSystem), aspects. elementBalance/modalityBalance count the placements listed in balanceIncludes.'),
+        vedic: z.looseObject({}).describe('Vedic (Sidereal/Jyotish) chart: planets with sidereal degrees, houses (see houseSystem), dashas. Rahu/Ketu are always retrograde.'),
         chinese: z.looseObject({}).describe('Chinese (BaZi/Four Pillars) chart: pillars and luck pillars.'),
       }).describe('Condensed chart data when summary is true, otherwise full chart data.'),
-      warnings: z.array(z.string()).describe('Non-fatal issues, e.g. a defaulted birth time reducing accuracy.'),
+      warnings: z.array(z.string()).describe('Non-fatal issues that limit accuracy: a defaulted birth time, an ambiguous location (with the other matches), a Moon near a nakshatra boundary. Read before interpreting.'),
     }),
     annotations: {
       readOnlyHint: true,
@@ -83,7 +83,7 @@ export function createMcpServer() {
   server.registerTool('geocode_location', {
     title: 'Geocode Location',
     description:
-      'Look up a location by name and return coordinates and timezone. Use this to resolve ambiguous locations before calculating charts, or to get coordinates for the calculate_charts tool.',
+      'Look up a location by name and return coordinates and timezone for the best match, plus any other distinct places the name also matches. When alternatives is non-empty, confirm the intended place with the user before calculating charts.',
     inputSchema: z.object({
       query: z
         .string()
@@ -96,6 +96,11 @@ export function createMcpServer() {
       lng: z.number().describe('Longitude in decimal degrees.'),
       displayName: z.string().describe('Full resolved place name.'),
       timezone: z.string().nullable().describe('IANA timezone, or null if it could not be resolved.'),
+      alternatives: z.array(z.object({
+        lat: z.number(),
+        lng: z.number(),
+        displayName: z.string(),
+      })).describe('Other distinct places matching the query, best first. Empty when the query is unambiguous.'),
     }),
     annotations: {
       readOnlyHint: true,
@@ -111,6 +116,7 @@ export function createMcpServer() {
         lng: result.lng,
         displayName: result.displayName,
         timezone: result.timezone,
+        alternatives: result.alternatives,
       };
 
       return {

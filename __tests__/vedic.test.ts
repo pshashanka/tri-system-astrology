@@ -104,9 +104,9 @@ describe('calculateVedicChart', () => {
       expect(chart.planets.mercury.retrograde).toBe(true);
     });
 
-    it('Rahu and Ketu are never retrograde', () => {
-      expect(chart.planets.rahu.retrograde).toBe(false);
-      expect(chart.planets.ketu.retrograde).toBe(false);
+    it('Rahu and Ketu are always retrograde', () => {
+      expect(chart.planets.rahu.retrograde).toBe(true);
+      expect(chart.planets.ketu.retrograde).toBe(true);
     });
 
     it('Rahu and Ketu are always 180° apart', () => {

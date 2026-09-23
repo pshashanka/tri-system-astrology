@@ -2,7 +2,7 @@
  * Vedic (Sidereal) Astrology Chart Calculator
  * Uses astronomy-engine (pure JS) for high-precision geocentric positions.
  * Includes: Rashi, Nakshatra + Pada, Navamsa, Planetary Dignity,
- * Rahu/Ketu (mean node), Vimshottari Dasha, Whole Sign houses from Lagna.
+ * Rahu/Ketu (mean node, always retrograde), Vimshottari Dasha, Whole Sign houses from Lagna.
  */
 
 import * as Astronomy from 'astronomy-engine';
@@ -309,6 +309,7 @@ interface House {
 
 export interface VedicChart {
   system: string;
+  houseSystem: string;
   ayanamsa: number;
   lagna: SignInfo;
   sun: VedicPlanetInfo;
@@ -382,14 +383,15 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
     nakshatra: getNakshatra(rahuSid),
     navamsa: getNavamsaSign(rahuSid),
     dignity: getDignity('rahu', rahuInfo.signIndex),
-    retrograde: false,
+    // The mean node only ever moves backward; Jyotish treats Rahu/Ketu as always retrograde.
+    retrograde: true,
   };
   planets.ketu = {
     ...ketuInfo,
     nakshatra: getNakshatra(ketuSid),
     navamsa: getNavamsaSign(ketuSid),
     dignity: getDignity('ketu', ketuInfo.signIndex),
-    retrograde: false,
+    retrograde: true,
   };
 
   const lagnaSignIdx = lagna.signIndex;
@@ -412,6 +414,7 @@ export function calculateVedicChart(date: Date, lat: number, lng: number): Vedic
 
   return {
     system: 'Vedic (Sidereal)',
+    houseSystem: 'Whole Sign from Lagna',
     ayanamsa: Math.round(ayanamsa * 1000) / 1000,
     lagna,
     sun,

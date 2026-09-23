@@ -22,9 +22,11 @@ themes — never at the level of matching labels.
 ## Procedure
 
 1. **Resolve the birth place if it is ambiguous.** For a bare city name that exists in
-   several countries ("Springfield", "Cambridge"), call `geocode_location` first and
-   confirm the match with the user before calculating. For an unambiguous place, skip
-   this — `calculate_charts` geocodes internally.
+   several countries ("Springfield", "Cambridge"), call `geocode_location` first. If its
+   `alternatives` list is non-empty, show the user the best match and the alternatives
+   and ask which they mean; then calculate with that place's `lat`/`lng`/`timezone`.
+   For an unambiguous place, skip this — `calculate_charts` geocodes internally, and
+   adds an ambiguity warning (with the other matches) if the name turns out to be shared.
 
 2. **Calculate the charts.** Call `calculate_charts` once with `date`, `time`, and
    either `location` or an explicit `lat`/`lng`/`timezone` triple. Pass `gender` when
@@ -33,8 +35,10 @@ themes — never at the level of matching labels.
 
 3. **Read the `warnings` array before interpreting.** It is the input to your confidence
    calibration, not a footnote. If it reports that the birth time was defaulted to noon,
-   say so plainly and treat the ascendant, the house placements and the BaZi hour pillar
-   as unreliable for this reading.
+   say so plainly and treat the ascendant, the house placements, the dasha dates and the
+   BaZi hour pillar as unreliable for this reading. If it reports the Moon near a
+   nakshatra boundary, present the dasha timing as tentative. If it reports an ambiguous
+   location, confirm the place with the user before giving the reading.
 
 4. **Interpret each system in its own terms, in this order.** Do not blend yet.
    - **Western** — personality style, emotional patterning, visible life themes,

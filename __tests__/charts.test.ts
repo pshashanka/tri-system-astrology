@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { calculateAllCharts } from '../lib/charts';
+import { geocode } from '../lib/geocode';
 
 // Mock geocode to avoid network calls
 vi.mock('../lib/geocode', () => ({
@@ -8,6 +9,7 @@ vi.mock('../lib/geocode', () => ({
     lng: -74.006,
     timezone: 'America/New_York',
     displayName: 'New York, NY, USA',
+    alternatives: [],
   }),
 }));
 
@@ -74,6 +76,54 @@ describe('calculateAllCharts', () => {
         timezone: 'America/New_York',
       });
       expect(result.warnings.some((w) => w.includes('No birth time'))).toBe(false);
+    });
+
+    it('names the dasha and hour pillar in the no-time warning', async () => {
+      const result = await calculateAllCharts({
+        date: '1990-05-15',
+        lat: 40.7128,
+        lng: -74.006,
+        timezone: 'America/New_York',
+      });
+      const warning = result.warnings.find((w) => w.includes('No birth time'))!;
+      expect(warning).toContain('dasha');
+      expect(warning).toContain('hour pillar');
+    });
+  });
+
+  describe('nakshatra boundary warning', () => {
+    // Mumbai, 1990-06-15 14:30: the sidereal Moon sits at ~20.0° Aquarius,
+    // on the Shatabhisha / Purva Bhadrapada boundary.
+    const mumbai = { lat: 19.055, lng: 72.8692, timezone: 'Asia/Kolkata' };
+
+    it('warns when the Moon is near a nakshatra boundary', async () => {
+      const result = await calculateAllCharts({ date: '1990-06-15', time: '14:30', ...mumbai });
+      expect(result.warnings.some((w) => w.includes('nakshatra boundary'))).toBe(true);
+    });
+
+    it('does not warn when the Moon is well inside a nakshatra', async () => {
+      const result = await calculateAllCharts({ date: '1990-06-15', time: '02:00', ...mumbai });
+      expect(result.warnings.some((w) => w.includes('nakshatra boundary'))).toBe(false);
+    });
+  });
+
+  describe('ambiguous location', () => {
+    it('warns and lists the other matches', async () => {
+      vi.mocked(geocode).mockResolvedValueOnce({
+        lat: 39.799,
+        lng: -89.644,
+        timezone: 'America/Chicago',
+        displayName: 'Springfield, Illinois, United States',
+        alternatives: [{ lat: 37.209, lng: -93.292, displayName: 'Springfield, Missouri, United States' }],
+      });
+      const result = await calculateAllCharts({ date: '1990-05-15', time: '10:00', location: 'Springfield' });
+      const warning = result.warnings.find((w) => w.includes('ambiguous'))!;
+      expect(warning).toContain('Springfield, Missouri');
+    });
+
+    it('does not warn for an unambiguous location', async () => {
+      const result = await calculateAllCharts({ date: '1990-05-15', time: '10:00', location: 'New York' });
+      expect(result.warnings.some((w) => w.includes('ambiguous'))).toBe(false);
     });
   });
 

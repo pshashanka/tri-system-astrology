@@ -10,6 +10,9 @@ import { calculateVedicChart, type VedicChart } from './vedic';
 import { calculateChineseChart, type ChineseChart } from './chinese';
 import { makeBirthDateTime } from './timezone';
 
+// ~1 hour of lunar motion
+const MOON_NAKSHATRA_BOUNDARY_DEG = 0.5;
+
 export interface ChartInput {
   date: string;       // YYYY-MM-DD
   time?: string;      // HH:MM (defaults to 12:00)
@@ -60,7 +63,12 @@ export async function calculateAllCharts(input: ChartInput): Promise<ChartResult
   }
 
   if (!input.time) {
-    warnings.push('No birth time provided; defaulting to 12:00 noon. Ascendant and house positions may be inaccurate.');
+    warnings.push(
+      'No birth time provided; defaulting to 12:00 noon. Time-sensitive results are unreliable: '
+      + 'the Western ascendant, midheaven and houses; the Vedic lagna, houses and dasha dates '
+      + '(the Moon moves ~13° a day, which can shift the dasha periods by years); '
+      + 'and the Chinese hour pillar and element balance.'
+    );
   }
 
   // Resolve coordinates + timezone
@@ -96,6 +104,13 @@ export async function calculateAllCharts(input: ChartInput): Promise<ChartResult
     if (!timezone) {
       warnings.push('Timezone lookup failed; birth time treated as UTC. Chart timing may be inaccurate.');
     }
+    if (geo.alternatives.length > 0) {
+      const others = geo.alternatives.map((a) => a.displayName).join(' | ');
+      warnings.push(
+        `Location "${input.location}" is ambiguous; used ${geo.displayName}. Other matches: ${others}. `
+        + 'Confirm with the user, and recalculate with a more specific location if this is the wrong place.'
+      );
+    }
   } else {
     throw new Error('Either location or lat/lng coordinates are required');
   }
@@ -116,6 +131,21 @@ export async function calculateAllCharts(input: ChartInput): Promise<ChartResult
     Promise.resolve(calculateVedicChart(utcDate, lat, lng)),
     Promise.resolve(calculateChineseChart(localDate, genderNum)),
   ]);
+
+  // The Moon's nakshatra fixes the dasha sequence, and the Moon moves ~0.5° an hour.
+  // Near a boundary, a birth time off by under an hour flips the nakshatra and
+  // every dasha date with it. Only worth saying when the time was actually given.
+  if (input.time) {
+    const span = 360 / 27;
+    const pos = vedic.moon.longitude % span;
+    const toBoundary = Math.min(pos, span - pos);
+    if (toBoundary < MOON_NAKSHATRA_BOUNDARY_DEG) {
+      warnings.push(
+        `The Vedic Moon is ${toBoundary.toFixed(2)}° from a nakshatra boundary (${vedic.moon.nakshatra.name}). `
+        + 'A birth time error of about an hour would change the nakshatra and all dasha dates; treat them as tentative.'
+      );
+    }
+  }
 
   return {
     birthData: {

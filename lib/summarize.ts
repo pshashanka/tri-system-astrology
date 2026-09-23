@@ -10,6 +10,8 @@ import type { VedicChart } from './vedic';
 import type { ChineseChart } from './chinese';
 
 export interface SummarizedWestern {
+  houseSystem: string;
+  balanceIncludes: string[];
   ascendant: string;
   midheaven: string;
   sun: { sign: string; degree: number; dignity: string };
@@ -22,11 +24,12 @@ export interface SummarizedWestern {
 }
 
 export interface SummarizedVedic {
+  houseSystem: string;
   ayanamsa: number;
   lagna: string;
-  sun: { sign: string; nakshatra: string; pada: number; dignity: string; navamsa: string };
-  moon: { sign: string; nakshatra: string; pada: number; dignity: string; navamsa: string };
-  planets: Record<string, { sign: string; nakshatra: string; pada: number; dignity: string; navamsa: string; retrograde: boolean }>;
+  sun: { sign: string; degree: number; nakshatra: string; pada: number; dignity: string; navamsa: string };
+  moon: { sign: string; degree: number; nakshatra: string; pada: number; dignity: string; navamsa: string };
+  planets: Record<string, { sign: string; degree: number; nakshatra: string; pada: number; dignity: string; navamsa: string; retrograde: boolean }>;
   houses: Record<number, { sign: string; planets: string[] }>;
   dasha: { mahadasha: { planet: string; start: string; end: string }; antardasha: { planet: string; start: string; end: string } | null };
 }
@@ -71,6 +74,8 @@ function summarizeWestern(chart: WesternChart): SummarizedWestern {
   }
 
   return {
+    houseSystem: chart.houseSystem,
+    balanceIncludes: chart.balanceIncludes,
     ascendant: `${chart.ascendant.sign} ${round1(chart.ascendant.degree)}°`,
     midheaven: `${chart.midheaven.sign} ${round1(chart.midheaven.degree)}°`,
     sun: { sign: chart.sun.sign, degree: round1(chart.sun.degree), dignity: chart.sun.dignity },
@@ -88,6 +93,7 @@ function summarizeVedic(chart: VedicChart): SummarizedVedic {
   for (const [key, p] of Object.entries(chart.planets)) {
     planets[key] = {
       sign: p.sign,
+      degree: round1(p.degree),
       nakshatra: p.nakshatra.name,
       pada: p.nakshatra.pada,
       dignity: p.dignity,
@@ -102,10 +108,12 @@ function summarizeVedic(chart: VedicChart): SummarizedVedic {
   }
 
   return {
+    houseSystem: chart.houseSystem,
     ayanamsa: round1(chart.ayanamsa),
     lagna: `${chart.lagna.sign} ${round1(chart.lagna.degree)}°`,
     sun: {
       sign: chart.sun.sign,
+      degree: round1(chart.sun.degree),
       nakshatra: chart.sun.nakshatra.name,
       pada: chart.sun.nakshatra.pada,
       dignity: chart.sun.dignity,
@@ -113,6 +121,7 @@ function summarizeVedic(chart: VedicChart): SummarizedVedic {
     },
     moon: {
       sign: chart.moon.sign,
+      degree: round1(chart.moon.degree),
       nakshatra: chart.moon.nakshatra.name,
       pada: chart.moon.nakshatra.pada,
       dignity: chart.moon.dignity,

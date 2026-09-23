@@ -93,6 +93,41 @@ describe('geocode', () => {
       expect(calls.some((url) => url.includes('bigdatacloud'))).toBe(true);
     });
 
+    it('returns distinct other matches as alternatives, dropping near-duplicates', async () => {
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('nominatim')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve([
+                { lat: '39.799', lon: '-89.644', display_name: 'Springfield, Illinois' },
+                { lat: '39.781', lon: '-89.650', display_name: 'Springfield city boundary, Illinois' },
+                { lat: '37.209', lon: '-93.292', display_name: 'Springfield, Missouri' },
+              ]),
+          });
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ ianaTimeId: 'America/Chicago' }) });
+      });
+
+      const result = await geocode('Springfield');
+      expect(result.displayName).toBe('Springfield, Illinois');
+      expect(result.alternatives.map((a) => a.displayName)).toEqual(['Springfield, Missouri']);
+    });
+
+    it('returns no alternatives for a single match', async () => {
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('nominatim')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([{ lat: '40.7128', lon: '-74.006', display_name: 'New York' }]),
+          });
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ ianaTimeId: 'America/New_York' }) });
+      });
+
+      expect((await geocode('New York')).alternatives).toEqual([]);
+    });
+
     it('falls back to Open-Meteo when BigDataCloud fails', async () => {
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('nominatim')) {
