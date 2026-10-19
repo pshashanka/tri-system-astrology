@@ -268,7 +268,7 @@ app.get('/', (c) => {
       <h1>Triad Astro</h1>
       <p class="tagline">AI reads your birth chart across three ancient traditions — Western, Vedic &amp; Chinese — and reveals where they converge for deeper, more accurate insight.</p>
       <div class="hero-cta">
-        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn-gpt" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
+        <a href="https://chatgpt.com/plugins/plugin_asdk_app_6ab00a7a2c988191a774ed0b87559eb3" class="btn-gpt" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
       </div>
     </header>
 
@@ -316,7 +316,8 @@ app.get('/', (c) => {
       <h2>Discover What All Three Systems Say About You</h2>
       <p>Get your complete tri-system birth chart reading — analyzed by AI, free via ChatGPT.</p>
       <div class="cta-buttons">
-        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn btn-primary" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
+        <a href="https://chatgpt.com/plugins/plugin_asdk_app_6ab00a7a2c988191a774ed0b87559eb3" class="btn btn-primary" target="_blank" rel="noopener">✦ Get Your Free Reading</a>
+        <a href="https://chatgpt.com/g/g-69d1f9d6e32c81918788c4faf40ef5da-tri-system-astrology" class="btn btn-secondary" target="_blank" rel="noopener">Use the Custom GPT</a>
         <a href="/privacy" class="btn btn-secondary">Privacy</a>
       </div>
     </section>
