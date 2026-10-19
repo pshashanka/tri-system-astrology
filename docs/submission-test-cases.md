@@ -170,6 +170,11 @@ in the bundled skill.
 
 ## Release notes
 
+**Version 1.0.1**
+
+- Adds the MIT license: a `license` field in `plugin.json` and a `LICENSE`
+  file shipped inside the plugin.
+
 **Version 1.0.0 — initial release**
 
 Triad Astro calculates a birth chart across three traditions at once —
